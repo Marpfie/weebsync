@@ -1,0 +1,17 @@
+query Following($userId: Int!, $page: Int!) {
+    Page(page: $page, perPage: 50) {
+        pageInfo {
+            total
+            hasNextPage
+            currentPage
+        }
+        following(userId: $userId, sort: USERNAME) {
+            id
+            name
+            siteUrl
+            avatar {
+                medium
+            }
+        }
+    }
+}

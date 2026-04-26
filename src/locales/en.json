@@ -1,0 +1,129 @@
+{
+    "badge": {
+        "new": "Not on your list",
+        "plan": "In your backlog",
+        "started": "Already started"
+    },
+    "card": {
+        "anilistAvgTitle": "AniList community average score",
+        "dismiss": "Dismiss {{title}}",
+        "friendAvgTitle": "Average score from friends who rated this",
+        "friends_one": "1 friend",
+        "friends_other": "{{count}} friends",
+        "noRatingOutOf10": "—",
+        "openOnAniList": "Open {{title}} on AniList",
+        "viewOnAniList": "View {{title}} on AniList",
+        "watchedAndRated": "{{watchCount}} watched · {{ratedCount}} rated",
+        "watchedAndRated_manga": "{{watchCount}} read · {{ratedCount}} rated",
+        "weightedTitle": "Bayesian weighted score blending friends and AniList"
+    },
+    "dashboard": {
+        "backlogPicks": "Your Backlog Picks",
+        "noAnime": "No anime recommendations yet. Add friends on AniList and resync.",
+        "noManga": "No manga recommendations yet. Add friends on AniList and resync.",
+        "seeAll": "See all →",
+        "subtitle_one": "{{count}} friend contributing to your recommendations",
+        "subtitle_other": "{{count}} friends contributing to your recommendations",
+        "title": "Dashboard",
+        "topAnime": "Top Anime Recommendations",
+        "topManga": "Top Manga Recommendations"
+    },
+    "friends": {
+        "avatarAlt": "{{name}}'s avatar",
+        "excludeAriaLabel": "Exclude {{name}}",
+        "excluded": "Excluded",
+        "includeAriaLabel": "Include {{name}}",
+        "included": "Included",
+        "listAriaLabel": "Friend list",
+        "loading": "Loading friends…",
+        "subtitle_one": "{{count}} person you follow on AniList. Toggle friends to include or exclude their ratings.",
+        "subtitle_other": "{{count}} people you follow on AniList. Toggle friends to include or exclude their ratings.",
+        "title": "Friends",
+        "toggleSrExcluded": "Excluded; Toggle {{name}}",
+        "toggleSrIncluded": "Included; Toggle {{name}}",
+        "viewOnAniList": "View on AniList"
+    },
+    "header": {
+        "avatarAlt": "{{name}}'s avatar",
+        "logout": "Logout"
+    },
+    "login": {
+        "howItWorks": "How it works",
+        "loginButton": "Log in with AniList",
+        "privacyNote": "weebsync only reads your AniList data. It never posts, modifies, or stores your data on any server. Everything stays in your browser.",
+        "step1": "Log in with your AniList account",
+        "step2": "weebsync reads your list and your friends' ratings",
+        "step3": "Your backlog is ranked by what your friends loved",
+        "step4": "Stop scrolling. Watch something good.",
+        "tagline": "Your AniList backlog, ranked by people you trust."
+    },
+    "nav": {
+        "anime": "Anime",
+        "dashboard": "Dashboard",
+        "friends": "Friends",
+        "manga": "Manga",
+        "settings": "Settings",
+        "title1": "weeb",
+        "title2": "sync"
+    },
+    "reasons": {
+        "alreadyStarted": "You have already started this",
+        "inPlanList": "Already in your Plan to Watch",
+        "inPlanList_manga": "Already in your Plan to Read",
+        "ratedOnly_one": "{{count}} friend rated avg {{avg}}/10",
+        "ratedOnly_other": "{{count}} friends rated avg {{avg}}/10",
+        "watchedAndRated_manga_one": "{{count}} friend read · {{ratedCount}} rated avg {{avg}}/10",
+        "watchedAndRated_manga_other": "{{count}} friends read · {{ratedCount}} rated avg {{avg}}/10",
+        "watchedAndRated_one": "{{count}} friend watched · {{ratedCount}} rated avg {{avg}}/10",
+        "watchedAndRated_other": "{{count}} friends watched · {{ratedCount}} rated avg {{avg}}/10",
+        "watchedNoRatings_manga_one": "{{count}} friend read — no ratings yet",
+        "watchedNoRatings_manga_other": "{{count}} friends read — no ratings yet",
+        "watchedNoRatings_one": "{{count}} friend watched — no ratings yet",
+        "watchedNoRatings_other": "{{count}} friends watched — no ratings yet"
+    },
+    "recs": {
+        "backlogOnly": "Backlog only",
+        "empty": "No recommendations yet",
+        "emptyDetail": "Make sure you have friends on AniList and they have rated some anime.",
+        "emptyDetail_manga": "Make sure you have friends on AniList and they have rated some manga.",
+        "fromBacklog": "From your backlog",
+        "newDiscoveries": "New discoveries",
+        "title_anime": "Anime Recommendations",
+        "title_manga": "Manga Recommendations"
+    },
+    "settings": {
+        "accountSection": "Account",
+        "adultContent": "Show adult content",
+        "adultContentDesc": "Include 18+ rated media in recommendations",
+        "clearDismissed": "Clear all dismissed",
+        "dismissedCount": "{{anime}} anime and {{manga}} manga dismissed.",
+        "dismissedSection": "Dismissed Items",
+        "includeReading": "Include currently reading manga",
+        "includeReadingDesc": "Count friends' \"Currently Reading\" entries",
+        "includeWatching": "Include currently watching anime",
+        "includeWatchingDesc": "Count friends' \"Currently Watching\" entries",
+        "logout": "Log out",
+        "mode": {
+            "friendFavourites": "Friend Favourites",
+            "friendsOnly": "Friends Only",
+            "mostAgreed": "Most Agreed On"
+        },
+        "recMode": "Recommendation mode",
+        "recModeAriaLabel": "Recommendation mode",
+        "recModeDesc": "How to rank friend recommendations",
+        "recSection": "Recommendations",
+        "title": "Settings"
+    },
+    "sort": {
+        "legend": "Sort recommendations",
+        "mostFriends": "Most friends",
+        "topRated": "Top rated"
+    },
+    "sync": {
+        "lastSynced": "Last synced: {{time}}",
+        "never": "Never",
+        "resync": "Resync",
+        "resyncAriaLabel": "Resync data from AniList",
+        "syncing": "Syncing friends… {{current}}/{{total}}"
+    }
+}

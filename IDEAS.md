@@ -1,0 +1,6 @@
+- Search Bar for friends page
+- mass toggle friends, to allow user to easily include only specific ones
+- Search bar in anime/manga pages
+- Limit default amount of media listed
+- Add "back to top" button
+-

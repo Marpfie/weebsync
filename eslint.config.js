@@ -1,24 +1,45 @@
+import eslintReact from '@eslint-react/eslint-plugin'
 import js from '@eslint/js'
-import eslintPluginPrettier from 'eslint-plugin-prettier'
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
-import react from 'eslint-plugin-react'
+import eslintConfigPrettier from 'eslint-config-prettier'
+import perfectionist from 'eslint-plugin-perfectionist'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
-import simpleImportSort from 'eslint-plugin-simple-import-sort'
-import sortKeysFix from 'eslint-plugin-sort-keys-fix'
 import eslintPluginUnicorn from 'eslint-plugin-unicorn'
 import unusedImports from 'eslint-plugin-unused-imports'
+import { defineConfig, globalIgnores } from 'eslint/config'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-    globalIgnores(['dist', 'bin', 'build', 'node_modules', 'vite.config.ts', '.vite-inspect/*', 'src/vite-env.d.ts']),
+    globalIgnores([
+        'dist',
+        'bin',
+        'build',
+        'node_modules',
+        'vite.config.ts',
+        '.vite-inspect/*',
+        'src/vite-env.d.ts',
+        'src/routeTree.gen.ts',
+        'src/gql/**',
+    ]),
     js.configs.recommended,
     ...tseslint.configs.recommended,
-    react.configs.flat.recommended,
+    {
+        extends: [...tseslint.configs.strictTypeChecked, eslintReact.configs['strict-type-checked']],
+        files: ['src/**/*.{ts,tsx}'],
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+        rules: {
+            '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+        },
+    },
     reactRefresh.configs.vite,
-    eslintPluginPrettierRecommended,
+    eslintConfigPrettier,
+    perfectionist.configs['recommended-natural'],
     eslintPluginUnicorn.configs.all,
     {
         languageOptions: {
@@ -29,11 +50,7 @@ export default defineConfig([
             sourceType: 'module',
         },
         plugins: {
-            prettier: eslintPluginPrettier,
-            react,
             'react-hooks': reactHooks,
-            'simple-import-sort': simpleImportSort,
-            'sort-keys-fix': sortKeysFix,
             'unused-imports': unusedImports,
         },
         rules: {
@@ -47,10 +64,24 @@ export default defineConfig([
             ],
             // Handled via unused-imports Plugin
             '@typescript-eslint/no-unused-vars': 'off',
-            'prettier/prettier': 'warn',
-            'simple-import-sort/exports': 'warn',
-            'simple-import-sort/imports': 'warn',
-            'sort-keys-fix/sort-keys-fix': 'warn',
+            'perfectionist/sort-imports': [
+                'warn',
+                {
+                    groups: [
+                        'builtin',
+                        'external',
+                        'internal',
+                        ['parent', 'sibling', 'index'],
+                        'side-effect-style',
+                        'side-effect',
+                    ],
+                    newlinesBetween: 1,
+                    order: 'asc',
+                    type: 'natural',
+                },
+            ],
+            'react-hooks/purity': 'warn',
+            'react-hooks/set-state-in-effect': 'warn',
             'unicorn/filename-case': [
                 'off',
                 {
@@ -60,6 +91,8 @@ export default defineConfig([
                     },
                 },
             ],
+            'unicorn/no-keyword-prefix': ['error', { disallowedPrefixes: ['new'] }],
+            'unicorn/no-null': 'off',
             'unicorn/prevent-abbreviations': [
                 'warn',
                 {
@@ -86,9 +119,6 @@ export default defineConfig([
                     varsIgnorePattern: '^_',
                 },
             ],
-        },
-        settings: {
-            react: { version: 'detect' },
         },
     },
 ])

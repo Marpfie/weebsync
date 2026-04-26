@@ -1,0 +1,39 @@
+query UserMediaLists($userId: Int!, $type: MediaType!) {
+    MediaListCollection(userId: $userId, type: $type) {
+        lists {
+            name
+            status
+            isCustomList
+            entries {
+                id
+                status
+                score(format: POINT_10_DECIMAL)
+                progress
+                media {
+                    id
+                    type
+                    format
+                    status
+                    episodes
+                    chapters
+                    volumes
+                    season
+                    seasonYear
+                    averageScore
+                    siteUrl
+                    title {
+                        romaji
+                        english
+                        native
+                    }
+                    coverImage {
+                        medium
+                        large
+                        color
+                    }
+                    genres
+                }
+            }
+        }
+    }
+}

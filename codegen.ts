@@ -1,21 +1,21 @@
 import type { CodegenConfig } from '@graphql-codegen/cli'
 
 const config: CodegenConfig = {
-    schema: 'https://graphql.anilist.co',
-    documents: ['src/**/*.{ts,tsx,graphql}'],
+    documents: ['src/**/*.graphql'],
     generates: {
         './src/gql/': {
+            config: {
+                enumsAsTypes: true,
+                useTypeImports: true,
+            },
             preset: 'client',
             presetConfig: {
                 fragmentMasking: false,
             },
-            config: {
-                useTypeImports: true,
-                enumsAsTypes: true,
-            },
         },
     },
     ignoreNoDocuments: true,
+    schema: 'https://graphql.anilist.co',
 }
 
 export default config

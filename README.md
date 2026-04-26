@@ -1,75 +1,40 @@
-# React + TypeScript + Vite
+# AniList Recommendations
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A social anime and manga recommendation website. It reads your friends' watch/read activity from AniList and surfaces titles they've rated highly that you haven't seen yet, ranked by how many friends recommended each title.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Layer                    | Technology                                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| **Framework**            | [React 19](https://react.dev/) with React Compiler                                       |
+| **Language**             | TypeScript 6 (strict mode)                                                               |
+| **Build tool**           | [Vite 8](https://vite.dev/)                                                              |
+| **Routing**              | [@tanstack/react-router](https://tanstack.com/router) (file-based)                       |
+| **GraphQL client**       | [@apollo/client](https://www.apollographql.com/docs/react/) with `apollo3-cache-persist` |
+| **GraphQL codegen**      | [@graphql-codegen/client-preset](https://the-guild.dev/graphql/codegen)                  |
+| **UI components**        | [shadcn](https://ui.shadcn.com/) (Nova preset, Base UI)                                  |
+| **Styling**              | [Tailwind CSS v4](https://tailwindcss.com/)                                              |
+| **Internationalisation** | [i18next](https://www.i18next.com/) + react-i18next                                      |
+| **Rate limiting**        | [p-queue](https://github.com/sindresorhus/p-queue)                                       |
+| **Package manager**      | [Bun](https://bun.sh/)                                                                   |
 
-## React Compiler
+## Getting Started
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun install
+bun run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Copy `.env.example` to `.env` and set `VITE_ANILIST_CLIENT_ID` to your AniList OAuth client ID before running.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+| Command                 | Description                          |
+| ----------------------- | ------------------------------------ |
+| `bun run dev`           | Start development server             |
+| `bun run build`         | Type-check and build for production  |
+| `bun run preview`       | Preview production build locally     |
+| `bun run lint`          | Run ESLint                           |
+| `bun run lint:fix`      | Run ESLint with auto-fix             |
+| `bun run codegen`       | Regenerate GraphQL types from schema |
+| `bun run codegen:watch` | Watch mode for codegen               |

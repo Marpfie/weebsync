@@ -25,5 +25,7 @@ dist-ssr
 
 .github
 
-# GraphQL codegen output
+# Generated
 src/gql/
+.tanstack
+.env

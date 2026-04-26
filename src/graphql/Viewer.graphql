@@ -1,0 +1,21 @@
+query Viewer {
+    Viewer {
+        id
+        name
+        siteUrl
+        avatar {
+            medium
+            large
+        }
+        statistics {
+            anime {
+                count
+                minutesWatched
+            }
+            manga {
+                count
+                chaptersRead
+            }
+        }
+    }
+}
