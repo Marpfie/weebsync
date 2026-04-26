@@ -8,3 +8,7 @@
 - double baylesian rating?
     - series with many friends who watched should gain a boost over those that dont
     - secondary rating with anilist score (non friend)
+- Unauthenticated mode: allow entering a username instead of OAuth login
+    - show avatar preview when username is typed (debounced lookup)
+    - OAuth login becomes optional ("login for convenience") rather than required
+    - authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
