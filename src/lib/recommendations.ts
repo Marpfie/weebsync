@@ -76,10 +76,13 @@ export interface UserMediaEntry {
     volumes: null | number
 }
 
-const PLAN_BONUS = 1.5 // added to rawScore (which is ~0–10 scale)
 const MIN_SCORE_THRESHOLD = 6
 /** How many "votes" the AniList community score is worth vs a single friend rating */
 const BAYESIAN_WEIGHT = 3
+/** Prior weight for friends-only Bayesian smoothing (no AniList influence) */
+const FRIENDS_ONLY_WEIGHT = 2
+/** Neutral prior mean used in friends-only mode (0–10 scale) */
+const NEUTRAL_PRIOR = 7
 
 //TODO shouldnt be necessary
 const normalizeScore = (score: number) => (score > 10 ? score / 10 : score)
@@ -179,29 +182,36 @@ export const buildRecommendations = (
 
         const friendRawAvg = friendCount > 0 ? normalizedScores.reduce((a, b) => a + b, 0) / friendCount : null
 
-        // Bayesian average: blend AniList community score (as prior) with friend scores
+        // Standard deviation of friend scores — penalises split opinions in most-agreed mode
+        const friendStddev =
+            friendCount > 1
+                ? Math.sqrt(
+                      normalizedScores.reduce((accumulator, s) => accumulator + (s - (friendRawAvg ?? 0)) ** 2, 0) /
+                          friendCount
+                  )
+                : 0
+
+        // Bayesian average: blend AniList community score with friend scores
         // anilistScore is on 0–100 scale; friend/normalized scores are 0–10
         const anilistMean = (anilistScore ?? 75) / 10
         const friendScoreSum = normalizedScores.reduce((a, b) => a + b, 0)
         const bayesianAvg = (BAYESIAN_WEIGHT * anilistMean + friendScoreSum) / (BAYESIAN_WEIGHT + friendCount)
 
-        const planBonus = isInPlanList ? PLAN_BONUS : 0
-
-        // friend-favourites: Bayesian avg (AniList prior + friend scores) — surfaces quality picks
-        // most-agreed:       friendCount × raw friend avg — surfaces consensus picks, no AniList influence
-        // friends-only:      pure raw friend avg — completely ignores AniList community score
+        // friend-favourites: Bayesian avg blending AniList prior with friend scores — surfaces quality picks
+        // friends-only:      Bayesian avg with neutral prior instead of AniList score — volume-weighted, no AniList influence
+        // most-agreed:       raw avg minus stddev — rewards consensus, penalises split opinions
         let rawScore: number
         switch (mode) {
             case 'friend-favourites': {
-                rawScore = bayesianAvg + planBonus
+                rawScore = bayesianAvg
                 break
             }
             case 'friends-only': {
-                rawScore = (friendRawAvg ?? 0) + planBonus
+                rawScore = (FRIENDS_ONLY_WEIGHT * NEUTRAL_PRIOR + friendScoreSum) / (FRIENDS_ONLY_WEIGHT + friendCount)
                 break
             }
             case 'most-agreed': {
-                rawScore = friendCount * (friendRawAvg ?? 0) + planBonus
+                rawScore = (friendRawAvg ?? 0) - friendStddev
                 break
             }
         }
@@ -249,8 +259,5 @@ export const buildRecommendations = (
         })
     }
 
-    return results.toSorted((a, b) => {
-        if (a.isInPlanList !== b.isInPlanList) return a.isInPlanList ? -1 : 1
-        return b.score - a.score
-    })
+    return results.toSorted((a, b) => b.score - a.score)
 }

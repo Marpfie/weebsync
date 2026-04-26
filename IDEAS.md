@@ -5,3 +5,6 @@
 - Add "back to top" button
 - better filtering for status lists
 - filter settings for types of anime/manga
+- double baylesian rating?
+    - series with many friends who watched should gain a boost over those that dont
+    - secondary rating with anilist score (non friend)

@@ -20,7 +20,7 @@ export const RootLayout: FC = () => {
                 Skip to main content
             </a>
             {token && !isAuthPage && <AppHeader />}
-            <div className={token && !isAuthPage ? 'flex flex-1' : 'flex flex-1'}>
+            <div className={'flex flex-1'}>
                 {token && !isAuthPage && <AppSidebar />}
                 <main className="flex-1 min-w-0" id="main-content">
                     <Outlet />
