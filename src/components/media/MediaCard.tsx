@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 
-import type { ReasonData, Recommendation } from '../../lib/recommendations'
+import type { ReasonData, Recommendation, RecommendationMode } from '../../lib/recommendations'
 import { RecommendationBadge } from './RecommendationBadge'
 
 interface MediaCardProps {
     className?: string
+    mode?: RecommendationMode
     onDismiss?: (mediaId: number) => void
     rec: Recommendation
 }
@@ -25,12 +26,18 @@ const FORMAT_LABELS: Record<string, string> = {
     TV_SHORT: 'TV Short',
 }
 
-export const MediaCard: FC<MediaCardProps> = ({ className, onDismiss, rec }) => {
+export const MediaCard: FC<MediaCardProps> = ({ className, mode, onDismiss, rec }) => {
     const { t } = useTranslation()
     const context = { context: rec.mediaType.toLowerCase() }
     const badgeType = rec.isInPlanList ? 'plan' : (rec.isAlreadyStarted ? 'started' : 'new')
     const formatLabel = rec.format ? (FORMAT_LABELS[rec.format] ?? rec.format) : null
     const accentColor = rec.coverColor ?? 'var(--primary)'
+    const weightedTitleKeys: Record<string, string> = {
+        'friend-favourites': 'card.weightedTitleFriendFavourites',
+        'friends-only': 'card.weightedTitleFriendsOnly',
+        'most-agreed': 'card.weightedTitleMostAgreed',
+    }
+    const weightedTitleKey = (mode && weightedTitleKeys[mode]) ?? 'card.weightedTitle'
 
     const formatReason = (r: ReasonData): string => {
         switch (r.type) {
@@ -41,11 +48,10 @@ export const MediaCard: FC<MediaCardProps> = ({ className, onDismiss, rec }) => 
                 return t('reasons.inPlanList', context)
             }
             case 'ratedOnly': {
-                return t('reasons.ratedOnly', { avg: r.avg.toFixed(1), count: r.ratedCount, ...context })
+                return t('reasons.ratedOnly', { count: r.ratedCount, ...context })
             }
             case 'watchedAndRated': {
                 return t('reasons.watchedAndRated', {
-                    avg: r.avg.toFixed(1),
                     count: r.watchCount,
                     ratedCount: r.ratedCount,
                     ...context,
@@ -133,10 +139,10 @@ export const MediaCard: FC<MediaCardProps> = ({ className, onDismiss, rec }) => 
                             </span>
                         </div>
                     )}
-                    {/* Weighted Bayesian score */}
-                    <div className="flex items-center gap-1" title={t('card.weightedTitle')}>
+                    {/* Weighted / sort score */}
+                    <div className="flex items-center gap-1" title={t(weightedTitleKey)}>
                         <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                            ⊕ {rec.friendAvgScore.toFixed(1)}
+                            ⊕ {rec.score.toFixed(1)}
                         </span>
                     </div>
                 </div>

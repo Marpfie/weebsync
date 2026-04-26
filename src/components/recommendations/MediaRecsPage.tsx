@@ -2,8 +2,8 @@ import type { FC } from 'react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { Recommendation } from '../../lib/recommendations'
-import { dismissMedia } from '../../store/preferences'
+import type { Recommendation, RecommendationMode } from '../../lib/recommendations'
+import { dismissMedia, getPreferences } from '../../store/preferences'
 import { MediaCard } from '../media/MediaCard'
 import { FilterBar } from '../recommendations/FilterBar'
 import { SyncStatus } from '../sync/SyncStatus'
@@ -15,6 +15,7 @@ interface MediaRecsPageProps {
     isSyncing?: boolean
     lastSyncedAt: null | number
     mediaType: 'ANIME' | 'MANGA'
+    mode?: RecommendationMode
     onResync: () => void
     recs: Recommendation[]
 }
@@ -25,9 +26,11 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({
     isSyncing = false,
     lastSyncedAt,
     mediaType,
+    mode,
     onResync,
     recs,
 }) => {
+    const resolvedMode = mode ?? getPreferences().recommendationMode
     const { t } = useTranslation()
     const context = { context: mediaType.toLowerCase() }
     const title = t(`recs.title_${mediaType.toLowerCase()}`)
@@ -85,7 +88,7 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {backlogRecs.map((rec) => (
-                            <MediaCard key={rec.mediaId} onDismiss={handleDismiss} rec={rec} />
+                            <MediaCard key={rec.mediaId} mode={resolvedMode} onDismiss={handleDismiss} rec={rec} />
                         ))}
                     </div>
                 </section>
@@ -99,7 +102,7 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {discoveryRecs.map((rec) => (
-                            <MediaCard key={rec.mediaId} onDismiss={handleDismiss} rec={rec} />
+                            <MediaCard key={rec.mediaId} mode={resolvedMode} onDismiss={handleDismiss} rec={rec} />
                         ))}
                     </div>
                 </section>

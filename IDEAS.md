@@ -3,4 +3,5 @@
 - Search bar in anime/manga pages
 - Limit default amount of media listed
 - Add "back to top" button
--
+- better filtering for status lists
+- filter settings for types of anime/manga

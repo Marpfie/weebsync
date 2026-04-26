@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useAuth } from '../../hooks/useAuth'
 import { useRecommendations } from '../../hooks/useRecommendations'
+import { getPreferences } from '../../store/preferences'
 import { MediaCard } from '../media/MediaCard'
 import { SyncStatus } from '../sync/SyncStatus'
 import { MediaCardSkeleton } from '../ui/Skeleton'
@@ -36,6 +37,7 @@ export const DashboardPage: FC = () => {
     const backlogManga = mangaRecs.filter((r) => r.isInPlanList).slice(0, 3)
 
     const skeletons = Array.from({ length: 3 }, (_, index) => index)
+    const mode = getPreferences().recommendationMode
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-10">
@@ -64,7 +66,7 @@ export const DashboardPage: FC = () => {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {[...backlogAnime, ...backlogManga].slice(0, 6).map((rec) => (
-                            <MediaCard key={rec.mediaId} rec={rec} />
+                            <MediaCard key={rec.mediaId} mode={mode} rec={rec} />
                         ))}
                     </div>
                 </section>
@@ -83,7 +85,7 @@ export const DashboardPage: FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {isLoadingBase
                         ? skeletons.map((n) => <MediaCardSkeleton key={n} />)
-                        : topAnime.map((rec) => <MediaCard key={rec.mediaId} rec={rec} />)}
+                        : topAnime.map((rec) => <MediaCard key={rec.mediaId} mode={mode} rec={rec} />)}
                     {!isLoadingBase && topAnime.length === 0 && (
                         <p className="col-span-3 text-sm py-6 text-center text-muted-foreground/60">
                             {t('dashboard.noAnime')}
@@ -105,7 +107,7 @@ export const DashboardPage: FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {isLoadingBase
                         ? skeletons.map((n) => <MediaCardSkeleton key={n} />)
-                        : topManga.map((rec) => <MediaCard key={rec.mediaId} rec={rec} />)}
+                        : topManga.map((rec) => <MediaCard key={rec.mediaId} mode={mode} rec={rec} />)}
                     {!isLoadingBase && topManga.length === 0 && (
                         <p className="col-span-3 text-sm py-6 text-center text-muted-foreground/60">
                             {t('dashboard.noManga')}

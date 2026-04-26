@@ -17,8 +17,8 @@ export interface FriendRating {
 }
 
 export type ReasonData =
-    | { avg: number; ratedCount: number; type: 'ratedOnly' }
-    | { avg: number; ratedCount: number; type: 'watchedAndRated'; watchCount: number }
+    | { ratedCount: number; type: 'ratedOnly' }
+    | { ratedCount: number; type: 'watchedAndRated'; watchCount: number }
     | { type: 'alreadyStarted' }
     | { type: 'inPlanList' }
     | { type: 'watchedNoRatings'; watchCount: number }
@@ -212,9 +212,13 @@ export const buildRecommendations = (
         if (friendCount === 0) {
             reasons.push({ type: 'watchedNoRatings', watchCount })
         } else if (watchCount > friendCount) {
-            reasons.push({ avg: bayesianAvg, ratedCount: friendCount, type: 'watchedAndRated', watchCount })
+            reasons.push({
+                ratedCount: friendCount,
+                type: 'watchedAndRated',
+                watchCount,
+            })
         } else {
-            reasons.push({ avg: bayesianAvg, ratedCount: friendCount, type: 'ratedOnly' })
+            reasons.push({ ratedCount: friendCount, type: 'ratedOnly' })
         }
         if (isAlreadyStarted) reasons.push({ type: 'alreadyStarted' })
 
