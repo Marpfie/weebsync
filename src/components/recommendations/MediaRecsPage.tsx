@@ -3,6 +3,7 @@ import { type FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useRecommendationView } from '../../hooks/useRecommendationView'
+import type { StatusFilter } from '../../hooks/useRecommendationView'
 import type { MediaType, Recommendation } from '../../lib/recommendations'
 import { setPreference, usePreferences } from '../../store/preferences'
 import { FilterBar } from '../recommendations/FilterBar'
@@ -12,6 +13,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '..
 import { RecommendationsGrid } from './RecommendationsGrid'
 
 interface MediaRecsPageProps {
+    initialStatus?: StatusFilter
     isLoading: boolean
     mediaType: MediaType
     recs: readonly Recommendation[]
@@ -23,10 +25,10 @@ interface MediaRecsPageProps {
  * Handles filter UI, "Load more" pagination, and a back-to-top floating button
  * wired to an IntersectionObserver sentinel (no scroll listener).
  */
-export const MediaRecsPage: FC<MediaRecsPageProps> = ({ isLoading, mediaType, recs }) => {
+export const MediaRecsPage: FC<MediaRecsPageProps> = ({ initialStatus, isLoading, mediaType, recs }) => {
     const { t } = useTranslation()
     const prefs = usePreferences()
-    const view = useRecommendationView(recs, mediaType)
+    const view = useRecommendationView(recs, mediaType, initialStatus)
     const context = { context: mediaType.toLowerCase() }
 
     const syncEnabled = mediaType === 'ANIME' ? prefs.syncAnime : prefs.syncManga
@@ -84,8 +86,8 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({ isLoading, mediaType, re
                 <h1 className="text-2xl font-bold">{t(`recs.title_${mediaType.toLowerCase()}`)}</h1>
                 <FilterBar
                     mediaType={mediaType}
-                    onBacklogToggle={view.setBacklogOnly}
-                    showBacklogOnly={view.backlogOnly}
+                    onStatusChange={view.setStatusFilter}
+                    statusFilter={view.statusFilter}
                 />
             </div>
 
@@ -103,34 +105,12 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({ isLoading, mediaType, re
                 </Empty>
             ) : (
                 <>
-                    {view.backlog.length > 0 && (
-                        <section aria-labelledby="backlog-section">
-                            <h2 className="text-base font-semibold mb-3 flex items-center gap-2" id="backlog-section">
-                                <span aria-hidden="true" className="inline-block w-2 h-2 rounded-full bg-primary" />
-                                {t('recs.fromBacklog')}
-                            </h2>
-                            <RecommendationsGrid
-                                mediaType={mediaType}
-                                mode={prefs.recommendationMode}
-                                onDismiss={view.onDismiss}
-                                recs={view.backlog}
-                            />
-                        </section>
-                    )}
-                    {view.discovery.length > 0 && (
-                        <section aria-labelledby="new-section">
-                            <h2 className="text-base font-semibold mb-3 flex items-center gap-2" id="new-section">
-                                <span aria-hidden="true" className="inline-block w-2 h-2 rounded-full bg-amber-400" />
-                                {t('recs.newDiscoveries')}
-                            </h2>
-                            <RecommendationsGrid
-                                mediaType={mediaType}
-                                mode={prefs.recommendationMode}
-                                onDismiss={view.onDismiss}
-                                recs={view.discovery}
-                            />
-                        </section>
-                    )}
+                    <RecommendationsGrid
+                        mediaType={mediaType}
+                        mode={prefs.recommendationMode}
+                        onDismiss={view.onDismiss}
+                        recs={view.visible}
+                    />
 
                     {view.canLoadMore && (
                         <div className="flex justify-center pt-2">

@@ -30,9 +30,13 @@ export type StatusFilter = 'all' | 'backlog' | 'new'
  * Uses a single unified list — no split into sections — so page boundaries are
  * always clean multiples of the 3-column grid.
  */
-export const useRecommendationView = (recs: readonly Recommendation[], mediaType: MediaType): RecommendationView => {
+export const useRecommendationView = (
+    recs: readonly Recommendation[],
+    mediaType: MediaType,
+    initialStatus: StatusFilter = 'all',
+): RecommendationView => {
     const prefs = usePreferences()
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatus)
     const [localDismissed, setLocalDismissed] = useState<readonly number[]>([])
     const [pageCount, setPageCount] = useState(1)
 

@@ -35,8 +35,10 @@
         "subtitle_one": "{{count}} friend contributing to your recommendations",
         "subtitle_other": "{{count}} friends contributing to your recommendations",
         "title": "Dashboard",
-        "topAnime": "Top Anime Recommendations",
-        "topManga": "Top Manga Recommendations"
+        "animeBacklog": "Anime from your backlog",
+        "animeNew": "New anime discoveries",
+        "mangaBacklog": "Manga from your backlog",
+        "mangaNew": "New manga discoveries"
     },
     "filter": {
         "adult": {
@@ -49,7 +51,13 @@
         "clearFormats": "Clear formats",
         "formatsCount_one": "{{count}} format",
         "formatsCount_other": "{{count}} formats",
-        "formatsLabel": "Formats"
+        "formatsLabel": "Formats",
+        "status": {
+            "all": "All",
+            "backlog": "Backlog only",
+            "new": "New only"
+        },
+        "statusLabel": "Show"
     },
     "format": {
         "DOUJIN": "Doujinshi",

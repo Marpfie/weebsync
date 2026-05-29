@@ -9,21 +9,17 @@ import { setPreference, usePreferences } from '../store/preferences'
 import { useRecommendationsStore } from '../store/recommendationsStore'
 
 const TOP_PER_SECTION = 6
-const BACKLOG_PER_TYPE = 3
 
 const Dashboard = () => {
     const { t } = useTranslation()
     const prefs = usePreferences()
     const recs = useRecommendationsStore()
 
-    const topAnime = recs.anime.slice(0, TOP_PER_SECTION)
-    const topManga = recs.manga.slice(0, TOP_PER_SECTION)
-    const backlog = [
-        ...recs.anime.filter((r) => r.isInPlanList).slice(0, BACKLOG_PER_TYPE),
-        ...recs.manga.filter((r) => r.isInPlanList).slice(0, BACKLOG_PER_TYPE),
-    ].slice(0, TOP_PER_SECTION)
+    const animeBacklog = recs.anime.filter((r) => r.isInPlanList).slice(0, TOP_PER_SECTION)
+    const animeNew = recs.anime.filter((r) => !r.isInPlanList).slice(0, TOP_PER_SECTION)
+    const mangaBacklog = recs.manga.filter((r) => r.isInPlanList).slice(0, TOP_PER_SECTION)
+    const mangaNew = recs.manga.filter((r) => !r.isInPlanList).slice(0, TOP_PER_SECTION)
 
-    const bothEnabled = prefs.syncAnime && prefs.syncManga
     const someDisabled = !prefs.syncAnime || !prefs.syncManga
     const disabledKey: 'syncAnime' | 'syncManga' = prefs.syncAnime ? 'syncManga' : 'syncAnime'
     const disabledContext = { context: prefs.syncAnime ? 'manga' : 'anime' }
@@ -54,55 +50,108 @@ const Dashboard = () => {
                 </Alert>
             )}
 
-            {bothEnabled && backlog.length > 0 && (
-                <section aria-labelledby="backlog-heading">
-                    <h2 className="text-lg font-semibold mb-4" id="backlog-heading">
-                        {t('dashboard.backlogPicks')}
-                    </h2>
-                    <RecommendationsGrid mediaType="ANIME" mode={prefs.recommendationMode} recs={backlog} />
-                </section>
-            )}
-
             {prefs.syncAnime && (
-                <section aria-labelledby="anime-heading">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold" id="anime-heading">
-                            {t('dashboard.topAnime')}
-                        </h2>
-                        <Link className="text-sm transition-colors text-primary" to="/anime">
-                            {t('dashboard.seeAll')}
-                        </Link>
-                    </div>
-                    <RecommendationsGrid
-                        emptyMessage={t('dashboard.noAnime')}
-                        isLoading={recs.isLoadingBase}
-                        mediaType="ANIME"
-                        mode={prefs.recommendationMode}
-                        recs={topAnime}
-                        skeletonCount={3}
-                    />
-                </section>
+                <>
+                    {animeBacklog.length > 0 && (
+                        <section aria-labelledby="anime-backlog-heading">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold" id="anime-backlog-heading">
+                                    {t('dashboard.animeBacklog')}
+                                </h2>
+                                <Link
+                                    className="text-sm transition-colors text-primary"
+                                    search={{ status: 'backlog' }}
+                                    to="/anime"
+                                >
+                                    {t('dashboard.seeAll')}
+                                </Link>
+                            </div>
+                            <RecommendationsGrid
+                                isLoading={recs.isLoadingBase}
+                                mediaType="ANIME"
+                                mode={prefs.recommendationMode}
+                                recs={animeBacklog}
+                                skeletonCount={3}
+                            />
+                        </section>
+                    )}
+                    {animeNew.length > 0 && (
+                        <section aria-labelledby="anime-new-heading">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold" id="anime-new-heading">
+                                    {t('dashboard.animeNew')}
+                                </h2>
+                                <Link
+                                    className="text-sm transition-colors text-primary"
+                                    search={{ status: 'new' }}
+                                    to="/anime"
+                                >
+                                    {t('dashboard.seeAll')}
+                                </Link>
+                            </div>
+                            <RecommendationsGrid
+                                emptyMessage={t('dashboard.noAnime')}
+                                isLoading={recs.isLoadingBase}
+                                mediaType="ANIME"
+                                mode={prefs.recommendationMode}
+                                recs={animeNew}
+                                skeletonCount={3}
+                            />
+                        </section>
+                    )}
+                </>
             )}
 
             {prefs.syncManga && (
-                <section aria-labelledby="manga-heading">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold" id="manga-heading">
-                            {t('dashboard.topManga')}
-                        </h2>
-                        <Link className="text-sm transition-colors text-primary" to="/manga">
-                            {t('dashboard.seeAll')}
-                        </Link>
-                    </div>
-                    <RecommendationsGrid
-                        emptyMessage={t('dashboard.noManga')}
-                        isLoading={recs.isLoadingBase}
-                        mediaType="MANGA"
-                        mode={prefs.recommendationMode}
-                        recs={topManga}
-                        skeletonCount={3}
-                    />
-                </section>
+                <>
+                    {mangaBacklog.length > 0 && (
+                        <section aria-labelledby="manga-backlog-heading">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold" id="manga-backlog-heading">
+                                    {t('dashboard.mangaBacklog')}
+                                </h2>
+                                <Link
+                                    className="text-sm transition-colors text-primary"
+                                    search={{ status: 'backlog' }}
+                                    to="/manga"
+                                >
+                                    {t('dashboard.seeAll')}
+                                </Link>
+                            </div>
+                            <RecommendationsGrid
+                                isLoading={recs.isLoadingBase}
+                                mediaType="MANGA"
+                                mode={prefs.recommendationMode}
+                                recs={mangaBacklog}
+                                skeletonCount={3}
+                            />
+                        </section>
+                    )}
+                    {mangaNew.length > 0 && (
+                        <section aria-labelledby="manga-new-heading">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold" id="manga-new-heading">
+                                    {t('dashboard.mangaNew')}
+                                </h2>
+                                <Link
+                                    className="text-sm transition-colors text-primary"
+                                    search={{ status: 'new' }}
+                                    to="/manga"
+                                >
+                                    {t('dashboard.seeAll')}
+                                </Link>
+                            </div>
+                            <RecommendationsGrid
+                                emptyMessage={t('dashboard.noManga')}
+                                isLoading={recs.isLoadingBase}
+                                mediaType="MANGA"
+                                mode={prefs.recommendationMode}
+                                recs={mangaNew}
+                                skeletonCount={3}
+                            />
+                        </section>
+                    )}
+                </>
             )}
         </div>
     )

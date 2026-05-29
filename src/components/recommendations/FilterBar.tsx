@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 
+import type { StatusFilter } from '../../hooks/useRecommendationView'
 import { formatKeysFor, type MediaType } from '../../lib/recommendations'
 import type { AdultFilterMode } from '../../store/preferences'
 import { mutate as mutatePrefs, setPreference, usePreferences } from '../../store/preferences'
 import { Button } from '../ui/button'
-import { Checkbox } from '../ui/checkbox'
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -20,18 +20,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import { Label } from '../ui/label'
 
 export type SortOption = 'friends' | 'score'
 
 interface FilterBarProps {
     className?: string
     mediaType: MediaType
-    onBacklogToggle: (v: boolean) => void
-    showBacklogOnly: boolean
+    onStatusChange: (v: StatusFilter) => void
+    statusFilter: StatusFilter
 }
 
-export const FilterBar: FC<FilterBarProps> = ({ className, mediaType, onBacklogToggle, showBacklogOnly }) => {
+export const FilterBar: FC<FilterBarProps> = ({ className, mediaType, onStatusChange, statusFilter }) => {
     const { t } = useTranslation()
     const prefs = usePreferences()
 
@@ -56,19 +55,33 @@ export const FilterBar: FC<FilterBarProps> = ({ className, mediaType, onBacklogT
         enabled.length === 0 ? t('filter.allFormats') : t('filter.formatsCount', { count: enabled.length })
 
     const adultEnabled = prefs.includeAdultContent
+    const statusActive = statusFilter !== 'all'
 
     return (
         <div className={cn('flex items-center gap-3 flex-wrap', className)}>
-            <Label className="cursor-pointer" htmlFor="filter-backlog-only">
-                <Checkbox
-                    checked={showBacklogOnly}
-                    id="filter-backlog-only"
-                    onCheckedChange={(checked) => {
-                        onBacklogToggle(checked)
-                    }}
+            <DropdownMenu>
+                <DropdownMenuTrigger
+                    render={
+                        <Button size="sm" variant={statusActive ? 'default' : 'outline'}>
+                            {t(`filter.status.${statusFilter}`)} <ChevronDown />
+                        </Button>
+                    }
                 />
-                <span className="text-muted-foreground font-normal">{t('recs.backlogOnly')}</span>
-            </Label>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>{t('filter.statusLabel')}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup
+                            onValueChange={(v) => { onStatusChange(v as StatusFilter) }}
+                            value={statusFilter}
+                        >
+                            <DropdownMenuRadioItem value="all">{t('filter.status.all')}</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="backlog">{t('filter.status.backlog')}</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="new">{t('filter.status.new')}</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
             <DropdownMenu>
                 <DropdownMenuTrigger
@@ -135,9 +148,7 @@ export const FilterBar: FC<FilterBarProps> = ({ className, mediaType, onBacklogT
                                 <DropdownMenuRadioItem value="exclude">
                                     {t('filter.adult.exclude')}
                                 </DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="only">
-                                    {t('filter.adult.only')}
-                                </DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="only">{t('filter.adult.only')}</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                         </DropdownMenuGroup>
                     </DropdownMenuContent>
