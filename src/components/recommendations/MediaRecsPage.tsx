@@ -1,4 +1,5 @@
-import type { FC } from 'react'
+import { ArrowUp } from 'lucide-react'
+import { type FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useRecommendationView } from '../../hooks/useRecommendationView'
@@ -19,6 +20,8 @@ interface MediaRecsPageProps {
 /**
  * Shared anime/manga page shell.
  * Shows an inline Alert when the user has the corresponding format toggled off.
+ * Handles filter UI, "Load more" pagination, and a back-to-top floating button
+ * wired to an IntersectionObserver sentinel (no scroll listener).
  */
 export const MediaRecsPage: FC<MediaRecsPageProps> = ({ isLoading, mediaType, recs }) => {
     const { t } = useTranslation()
@@ -28,6 +31,29 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({ isLoading, mediaType, re
 
     const syncEnabled = mediaType === 'ANIME' ? prefs.syncAnime : prefs.syncManga
     const enableKey = mediaType === 'ANIME' ? 'syncAnime' : 'syncManga'
+
+    const sentinelRef = useRef<HTMLDivElement | null>(null)
+    const [showBackToTop, setShowBackToTop] = useState(false)
+    useEffect(() => {
+        const node = sentinelRef.current
+        if (!node) return
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setShowBackToTop(!entry.isIntersecting)
+            },
+            { rootMargin: '0px', threshold: 0 }
+        )
+        observer.observe(node)
+        return () => {
+            observer.disconnect()
+        }
+    }, [])
+
+    const scrollToTop = () => {
+        const reduce = globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches
+        const main = document.querySelector('main') ?? document.scrollingElement ?? document.documentElement
+        main.scrollTo({ behavior: reduce ? 'auto' : 'smooth', top: 0 })
+    }
 
     if (!syncEnabled) {
         return (
@@ -53,14 +79,19 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({ isLoading, mediaType, re
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-8">
+            <div aria-hidden="true" ref={sentinelRef} />
             <div className="flex items-start justify-between flex-wrap gap-3">
                 <h1 className="text-2xl font-bold">{t(`recs.title_${mediaType.toLowerCase()}`)}</h1>
-                <FilterBar onBacklogToggle={view.setBacklogOnly} showBacklogOnly={view.backlogOnly} />
+                <FilterBar
+                    mediaType={mediaType}
+                    onBacklogToggle={view.setBacklogOnly}
+                    showBacklogOnly={view.backlogOnly}
+                />
             </div>
 
             {isLoading ? (
                 <RecommendationsGrid isLoading mediaType={mediaType} recs={[]} />
-            ) : (view.visible.length === 0 ? (
+            ) : (view.visibleAll.length === 0 ? (
                 <Empty>
                     <EmptyHeader>
                         <EmptyMedia>
@@ -100,8 +131,30 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({ isLoading, mediaType, re
                             />
                         </section>
                     )}
+
+                    {view.canLoadMore && (
+                        <div className="flex justify-center pt-2">
+                            <Button onClick={view.loadMore} variant="outline">
+                                {t('recs.loadMore', {
+                                    remaining: view.totalVisible - view.visible.length,
+                                })}
+                            </Button>
+                        </div>
+                    )}
                 </>
             ))}
+
+            {showBackToTop && (
+                <Button
+                    aria-label={t('recs.backToTop')}
+                    className="fixed bottom-6 right-6 shadow-lg"
+                    onClick={scrollToTop}
+                    size="icon"
+                    variant="secondary"
+                >
+                    <ArrowUp />
+                </Button>
+            )}
         </div>
     )
 }
