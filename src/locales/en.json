@@ -69,12 +69,19 @@
     },
     "header": {
         "avatarAlt": "{{name}}'s avatar",
+        "etaMinutes": "~{{count}}m remaining",
+        "etaSeconds": "~{{count}}s remaining",
+        "failedFriends_one": "{{count}} friend failed — click to retry",
+        "failedFriends_other": "{{count}} friends failed — click to retry",
         "guestBadge": "Guest",
         "logout": "Sign out",
         "modeAuthed": "Signed in with AniList",
         "modeGuest": "Browsing as guest",
+        "rateLimited": "Rate limited — resuming in {{seconds}}s",
+        "retryFailedAriaLabel": "Retry failed friend syncs",
         "switchUser": "Switch user",
         "syncAriaLabel": "Resync data from AniList",
+        "syncProgressAriaLabel": "Friend sync progress",
         "userMenuAriaLabel": "Open user menu"
     },
     "login": {
@@ -175,6 +182,8 @@
     },
     "sync": {
         "completeToast": "Friends resynced",
+        "completeWithFailuresToast_one": "Resync complete — {{count}} friend failed",
+        "completeWithFailuresToast_other": "Resync complete — {{count}} friends failed",
         "lastSynced": "Last synced: {{time}}",
         "lastSyncedAgo_day_one": "Last synced {{value}} day ago",
         "lastSyncedAgo_day_other": "Last synced {{value}} days ago",

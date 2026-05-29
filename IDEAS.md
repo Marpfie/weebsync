@@ -12,10 +12,6 @@
     - series with many friends who watched should gain a boost over those that dont
     - secondary rating with anilist score (non friend)
 - authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
-- better status indication
-    - visible animated progress bar of the loading queries
-    - visible pause state for the progress bar when the rate limit is reached (backend state exposed via `getRateLimitState`/`subscribeRateLimit` but no UI yet)
-    - make use of "Sonner" for notifying about errors, status changes and finished syncing (Phase 2)
 - language options
     - new languages with i18n
 - new rating mode based on "favorites"
@@ -32,3 +28,4 @@
         - browsing their anime ratings for highest deviations with an individual viewer to flip through anime individually
 - auto-threshold: auto-exclude friends from recommendations when their rating count falls below a configurable minimum (e.g. "ignore friends with fewer than 10 ratings")
     - may become redundant if the rating count range filter on the friends page covers the use case adequately
+- the display/order between /anime and "Top Anime Recommendations" in dashboard is not the same. that makese no sense as its supposed to be the same data?
