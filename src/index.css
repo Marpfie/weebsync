@@ -29,6 +29,31 @@ body {
     }
 }
 
+/* Diagonally-striped progress fill that slides rightward — used by the sync
+ * progress bar in the app header. Stripes are layered over the primary color
+ * via a repeating linear gradient; the background-position animation creates
+ * the motion. Disabled automatically by the reduced-motion media query above. */
+@keyframes progress-stripes {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 1rem 0;
+    }
+}
+
+.progress-stripes {
+    background-image: repeating-linear-gradient(
+        135deg,
+        color-mix(in oklab, white 22%, transparent) 0,
+        color-mix(in oklab, white 22%, transparent) 0.35rem,
+        transparent 0.35rem,
+        transparent 0.7rem
+    );
+    background-size: 1rem 1rem;
+    animation: progress-stripes 0.8s linear infinite;
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;

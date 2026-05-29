@@ -30,6 +30,7 @@ export const useRecommendationSync = (): void => {
     const client = useApolloClient()
     const { t } = useTranslation()
     const [syncKey, setSyncKey] = useState(0)
+    const [isSyncing, setIsSyncing] = useState(false)
 
     const userId = identity?.userId
 
@@ -148,20 +149,19 @@ export const useRecommendationSync = (): void => {
     const isLoadingBase = userListsLoading || followingResult.loading
     const isLoadingFriends = animeFriendLists.loading || mangaFriendLists.loading
 
-    // Record sync timestamp once a manual resync completes.
+    // Single source of truth for "a network sync just finished":
+    // any true→false transition of `isLoadingFriends`. Fires on manual
+    // resync, on toggling syncAnime/syncManga (which kicks off a fetch for
+    // the newly-enabled type) and on initial fetch when cache was missing.
+    const wasLoadingFriendsRef = useRef(false)
     useEffect(() => {
-        if (syncKey > 0 && !isLoadingFriends && !userListsLoading) {
-            recordSync(Date.now())
-        }
-    }, [syncKey, isLoadingFriends, userListsLoading])
-
-    // Emit a completion toast when a manual sync transitions from in-flight
-    // to settled. Counts and surfaces per-friend failures if any happened.
-    const wasLoadingFriends = useRef(false)
-    useEffect(() => {
-        const settling = wasLoadingFriends.current && !isLoadingFriends && syncKey > 0
-        wasLoadingFriends.current = isLoadingFriends
+        const settling = wasLoadingFriendsRef.current && !isLoadingFriends
+        wasLoadingFriendsRef.current = isLoadingFriends
         if (!settling) return
+
+        recordSync(Date.now())
+        // Reset the manual-sync flag so the header spinner can stop.
+        setIsSyncing(false)
 
         const failedCount = animeFriendLists.failedIds.length + mangaFriendLists.failedIds.length
         if (failedCount > 0) {
@@ -169,7 +169,7 @@ export const useRecommendationSync = (): void => {
         } else {
             toast.success(t('sync.completeToast'))
         }
-    }, [isLoadingFriends, syncKey, animeFriendLists.failedIds.length, mangaFriendLists.failedIds.length, t])
+    }, [isLoadingFriends, animeFriendLists.failedIds.length, mangaFriendLists.failedIds.length, t])
 
     // Build the actual recommendation lists.
     const anime = useMemo(
@@ -211,6 +211,7 @@ export const useRecommendationSync = (): void => {
             clearCache(userId)
             clearUserListCache(userId)
         }
+        setIsSyncing(true)
         setSyncKey((k) => k + 1)
     }, [userId])
 
@@ -235,7 +236,7 @@ export const useRecommendationSync = (): void => {
                 },
                 isLoadingBase,
                 isLoadingFriends,
-                isSyncing: syncKey > 0,
+                isSyncing,
                 lastSyncedAt: prefs.lastSyncedAt,
                 manga,
                 resync,
@@ -256,7 +257,7 @@ export const useRecommendationSync = (): void => {
         mangaFriendLists.total,
         isLoadingBase,
         isLoadingFriends,
-        syncKey,
+        isSyncing,
         prefs.lastSyncedAt,
         resync,
         retryFailed,

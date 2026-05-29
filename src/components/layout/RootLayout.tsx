@@ -4,7 +4,9 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import type { FC } from 'react'
 import { useEffect } from 'react'
 
+import { useAuth } from '../../hooks/useAuth'
 import { useRecommendationSync } from '../../hooks/useRecommendationSync'
+import { useViewer } from '../../hooks/useViewer'
 import { useIdentity } from '../../store/identity'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { Toaster } from '../ui/sonner'
@@ -13,6 +15,7 @@ import { AppSidebar } from './AppSidebar'
 
 export const RootLayout: FC = () => {
     const identity = useIdentity()
+    const { token } = useAuth()
     const routerState = useRouterState()
     const navigate = useNavigate()
     const client = useApolloClient()
@@ -21,16 +24,20 @@ export const RootLayout: FC = () => {
     const isLandingPage = pathname === '/'
     const showAppShell = identity != null && !isOAuthCallback && !isLandingPage
 
+    useViewer()
     useRecommendationSync()
 
     // Whenever identity disappears, cancel any in-flight queries (so friend-list
     // fetches don't keep burning rate-limit calls) and bounce back to landing.
+    // If a token is present, the viewer query is still resolving — wait for it
+    // to populate identity before deciding we're signed out (otherwise OAuth
+    // bounces straight back home).
     useEffect(() => {
-        if (identity == null && !isOAuthCallback) {
+        if (identity == null && !token && !isOAuthCallback) {
             void client.clearStore()
             void navigate({ to: '/' })
         }
-    }, [identity, isOAuthCallback, client, navigate])
+    }, [identity, token, isOAuthCallback, client, navigate])
 
     return (
         <div className="h-screen flex flex-col overflow-hidden">
