@@ -177,9 +177,7 @@ export const useRecommendationSync = (): void => {
                 ? buildRecommendations({
                       additionalStatuses: prefs.additionalAnimeStatuses,
                       dismissedIds: prefs.dismissedAnimeIds,
-                      excludedFriendIds: [
-                          ...new Set([...prefs.excludedFriendIds, ...prefs.friendAnimeExclusions]),
-                      ],
+                      excludedFriendIds: [...new Set([...prefs.excludedFriendIds, ...prefs.friendAnimeExclusions])],
                       friendInfoById,
                       friendRatings: animeFriendLists.data,
                       includeCurrentFriendEntries: prefs.includeCurrentlyWatching,
@@ -197,9 +195,7 @@ export const useRecommendationSync = (): void => {
                 ? buildRecommendations({
                       additionalStatuses: prefs.additionalMangaStatuses,
                       dismissedIds: prefs.dismissedMangaIds,
-                      excludedFriendIds: [
-                          ...new Set([...prefs.excludedFriendIds, ...prefs.friendMangaExclusions]),
-                      ],
+                      excludedFriendIds: [...new Set([...prefs.excludedFriendIds, ...prefs.friendMangaExclusions])],
                       friendInfoById,
                       friendRatings: mangaFriendLists.data,
                       includeCurrentFriendEntries: prefs.includeCurrentlyReading,
@@ -214,7 +210,10 @@ export const useRecommendationSync = (): void => {
     // Per-friend rating counts, used by the friends page to render
     // "142 anime rated / 4 manga rated" badges without extra requests.
     const friendRatingCounts = useMemo(() => {
-        const counts = new Map<number, { animeRated: number; animeWatched: number; mangaRated: number; mangaWatched: number }>()
+        const counts = new Map<
+            number,
+            { animeRated: number; animeWatched: number; mangaRated: number; mangaWatched: number }
+        >()
         const ensure = (id: number) => {
             let row = counts.get(id)
             if (!row) {

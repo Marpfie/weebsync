@@ -25,3 +25,4 @@
     - the rating count range filter on the friends page likely covers this adequately
 - the display/order between /anime and "Top Anime Recommendations" in dashboard is not the same. that makes no sense as its supposed to be the same data?
 - add "unfollow" mutation support to friends page if authenticated
+- use tooltip component consistently instead of base html (see for example the scores on the media cards - as long as this doesnt go against principles for a11y)

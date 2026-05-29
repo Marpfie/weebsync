@@ -33,7 +33,7 @@ export type StatusFilter = 'all' | 'backlog' | 'new'
 export const useRecommendationView = (
     recs: readonly Recommendation[],
     mediaType: MediaType,
-    initialStatus: StatusFilter = 'all',
+    initialStatus: StatusFilter = 'all'
 ): RecommendationView => {
     const prefs = usePreferences()
     const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatus)

@@ -319,7 +319,10 @@ const FriendsPage = () => {
                                     render={
                                         <Button size="sm" variant={rangeActive ? 'default' : 'outline'}>
                                             {rangeActive && (
-                                                <span aria-hidden="true" className="inline-block size-1.5 rounded-full bg-current opacity-80" />
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="inline-block size-1.5 rounded-full bg-current opacity-80"
+                                                />
                                             )}
                                             {t('friends.rangeFilterLabel')} <ChevronDown />
                                         </Button>

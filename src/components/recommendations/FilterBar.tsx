@@ -72,7 +72,9 @@ export const FilterBar: FC<FilterBarProps> = ({ className, mediaType, onStatusCh
                         <DropdownMenuLabel>{t('filter.statusLabel')}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuRadioGroup
-                            onValueChange={(v) => { onStatusChange(v as StatusFilter) }}
+                            onValueChange={(v) => {
+                                onStatusChange(v as StatusFilter)
+                            }}
                             value={statusFilter}
                         >
                             <DropdownMenuRadioItem value="all">{t('filter.status.all')}</DropdownMenuRadioItem>
