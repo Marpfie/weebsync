@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Switch } from '../components/ui/switch'
 import { useAuth } from '../hooks/useAuth'
@@ -12,6 +14,22 @@ import { setPreference, usePreferences } from '../store/preferences'
 const updatePreference = <K extends keyof Preferences>(key: K, value: Preferences[K]): void => {
     setPreference(key, value)
 }
+
+interface SettingRowProps {
+    children: React.ReactNode
+    description: string
+    title: string
+}
+
+const SettingRow: React.FC<SettingRowProps> = ({ children, description, title }) => (
+    <div className="flex items-center justify-between gap-4 py-3">
+        <div>
+            <p className="text-sm font-medium">{title}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        {children}
+    </div>
+)
 
 const SettingsPage = () => {
     const { t } = useTranslation()
@@ -26,137 +44,98 @@ const SettingsPage = () => {
     }
     const prefs = usePreferences()
 
-    const row = 'flex items-center justify-between py-3'
-    const dividerRow = 'flex items-center justify-between py-3 border-b border-border'
-
     return (
-        <div className="p-6 max-w-2xl mx-auto space-y-8">
+        <div className="p-6 max-w-2xl mx-auto space-y-6">
             <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
 
-            <section aria-labelledby="rec-settings">
-                <h2
-                    className="text-sm font-semibold uppercase tracking-wider mb-2 text-muted-foreground/60"
-                    id="rec-settings"
-                >
-                    {t('settings.recSection')}
-                </h2>
-                <div className="rounded-xl overflow-hidden bg-card border border-border">
-                    <div className="px-4">
-                        <div className={dividerRow}>
-                            <div>
-                                <p className="text-sm font-medium">{t('settings.recMode')}</p>
-                                <p className="text-xs text-muted-foreground">{t('settings.recModeDesc')}</p>
-                            </div>
-                            <Select
-                                onValueChange={(value) => {
-                                    updatePreference('recommendationMode', value as Preferences['recommendationMode'])
-                                }}
-                                value={prefs.recommendationMode}
-                            >
-                                <SelectTrigger aria-label={t('settings.recModeAriaLabel')}>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="friend-favourites">
-                                        {t('settings.mode.friendFavourites')}
-                                    </SelectItem>
-                                    <SelectItem value="most-agreed">{t('settings.mode.mostAgreed')}</SelectItem>
-                                    <SelectItem value="friends-only">{t('settings.mode.friendsOnly')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className={dividerRow}>
-                            <div>
-                                <p className="text-sm font-medium">{t('settings.includeWatching')}</p>
-                                <p className="text-xs text-muted-foreground">{t('settings.includeWatchingDesc')}</p>
-                            </div>
-                            <Switch
-                                aria-label={t('settings.includeWatching')}
-                                checked={prefs.includeCurrentlyWatching}
-                                onCheckedChange={(v) => {
-                                    updatePreference('includeCurrentlyWatching', v)
-                                }}
-                            />
-                        </div>
-
-                        <div className={dividerRow}>
-                            <div>
-                                <p className="text-sm font-medium">{t('settings.includeReading')}</p>
-                                <p className="text-xs text-muted-foreground">{t('settings.includeReadingDesc')}</p>
-                            </div>
-                            <Switch
-                                aria-label={t('settings.includeReading')}
-                                checked={prefs.includeCurrentlyReading}
-                                onCheckedChange={(v) => {
-                                    updatePreference('includeCurrentlyReading', v)
-                                }}
-                            />
-                        </div>
-
-                        <div className={row}>
-                            <div>
-                                <p className="text-sm font-medium">{t('settings.adultContent')}</p>
-                                <p className="text-xs text-muted-foreground">{t('settings.adultContentDesc')}</p>
-                            </div>
-                            <Switch
-                                aria-label={t('settings.adultContent')}
-                                checked={prefs.includeAdultContent}
-                                onCheckedChange={(v) => {
-                                    updatePreference('includeAdultContent', v)
-                                }}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t('settings.recSection')}</CardTitle>
+                </CardHeader>
+                <CardContent className="divide-y divide-border">
+                    <SettingRow description={t('settings.recModeDesc')} title={t('settings.recMode')}>
+                        <Select
+                            onValueChange={(value) => {
+                                updatePreference('recommendationMode', value as Preferences['recommendationMode'])
+                            }}
+                            value={prefs.recommendationMode}
+                        >
+                            <SelectTrigger aria-label={t('settings.recModeAriaLabel')}>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="friend-favourites">{t('settings.mode.friendFavourites')}</SelectItem>
+                                <SelectItem value="most-agreed">{t('settings.mode.mostAgreed')}</SelectItem>
+                                <SelectItem value="friends-only">{t('settings.mode.friendsOnly')}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </SettingRow>
+                    <SettingRow description={t('settings.includeWatchingDesc')} title={t('settings.includeWatching')}>
+                        <Switch
+                            aria-label={t('settings.includeWatching')}
+                            checked={prefs.includeCurrentlyWatching}
+                            onCheckedChange={(v) => {
+                                updatePreference('includeCurrentlyWatching', v)
+                            }}
+                        />
+                    </SettingRow>
+                    <SettingRow description={t('settings.includeReadingDesc')} title={t('settings.includeReading')}>
+                        <Switch
+                            aria-label={t('settings.includeReading')}
+                            checked={prefs.includeCurrentlyReading}
+                            onCheckedChange={(v) => {
+                                updatePreference('includeCurrentlyReading', v)
+                            }}
+                        />
+                    </SettingRow>
+                    <SettingRow description={t('settings.adultContentDesc')} title={t('settings.adultContent')}>
+                        <Switch
+                            aria-label={t('settings.adultContent')}
+                            checked={prefs.includeAdultContent}
+                            onCheckedChange={(v) => {
+                                updatePreference('includeAdultContent', v)
+                            }}
+                        />
+                    </SettingRow>
+                </CardContent>
+            </Card>
 
             {(prefs.dismissedAnimeIds.length > 0 || prefs.dismissedMangaIds.length > 0) && (
-                <section aria-labelledby="dismissed-heading">
-                    <h2
-                        className="text-sm font-semibold uppercase tracking-wider mb-2 text-muted-foreground/60"
-                        id="dismissed-heading"
-                    >
-                        {t('settings.dismissedSection')}
-                    </h2>
-                    <div className="rounded-xl p-4 bg-card border border-border">
-                        <p className="text-sm mb-3 text-muted-foreground">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{t('settings.dismissedSection')}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
                             {t('settings.dismissedCount', {
                                 anime: prefs.dismissedAnimeIds.length,
                                 manga: prefs.dismissedMangaIds.length,
                             })}
                         </p>
-                        <button
-                            className="text-sm px-3 py-1.5 rounded-lg bg-secondary text-foreground"
+                        <Button
                             onClick={() => {
                                 updatePreference('dismissedAnimeIds', [])
                                 updatePreference('dismissedMangaIds', [])
                             }}
-                            type="button"
+                            size="sm"
+                            variant="secondary"
                         >
                             {t('settings.clearDismissed')}
-                        </button>
-                    </div>
-                </section>
+                        </Button>
+                    </CardContent>
+                </Card>
             )}
 
-            <section aria-labelledby="account-heading">
-                <h2
-                    className="text-sm font-semibold uppercase tracking-wider mb-2 text-muted-foreground/60"
-                    id="account-heading"
-                >
-                    {t('settings.accountSection')}
-                </h2>
-                <div className="rounded-xl p-4 bg-card border border-border">
-                    <button
-                        className="text-sm px-4 py-2 rounded-lg font-medium bg-destructive text-white"
-                        onClick={handleSignOut}
-                        type="button"
-                    >
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t('settings.accountSection')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={handleSignOut} variant="destructive">
                         {identity?.mode === 'guest' ? t('settings.switchUser') : t('settings.logout')}
-                    </button>
-                </div>
-            </section>
+                    </Button>
+                </CardContent>
+            </Card>
         </div>
     )
 }

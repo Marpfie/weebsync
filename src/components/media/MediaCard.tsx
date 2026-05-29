@@ -1,10 +1,13 @@
-import { ExternalLink } from 'lucide-react'
+import { X } from 'lucide-react'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 
 import type { Recommendation, RecommendationMode } from '../../lib/recommendations'
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
+import { Card } from '../ui/card'
 import { FriendAvatarStack } from './FriendAvatarStack'
 import { MediaReasons } from './MediaReasons'
 import { MediaScoreRow } from './MediaScoreRow'
@@ -24,7 +27,7 @@ const badgeFor = (rec: Recommendation): 'new' | 'plan' | 'started' => {
 }
 
 /**
- * One recommendation, rendered as a card. Composes the sub-pieces
+ * One recommendation, rendered as a shadcn `Card`. Composes the sub-pieces
  * (`MediaScoreRow`, `MediaReasons`, `FriendAvatarStack`, `RecommendationBadge`)
  * so each can evolve or be swapped without rewriting the card shell.
  */
@@ -34,64 +37,55 @@ export const MediaCard: FC<MediaCardProps> = ({ className, mode, onDismiss, rec 
     const accentColor = rec.coverColor ?? 'var(--primary)'
 
     return (
-        <article
+        <Card
             className={cn(
-                'group relative flex gap-3 rounded-xl p-3 transition-all duration-200',
-                'hover:scale-[1.01] bg-card border border-border shadow-sm',
+                'group relative flex-row gap-3 overflow-visible p-3 transition-transform duration-200 hover:scale-[1.01]',
                 className
             )}
+            size="sm"
         >
             <a
                 aria-label={t('card.openOnAniList', { title: rec.title })}
-                className="shrink-0 relative"
+                className="relative block h-24 w-16 shrink-0 overflow-hidden rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 href={rec.siteUrl ?? '#'}
                 rel="noopener noreferrer"
+                style={{ backgroundColor: `${accentColor}33` }}
                 target="_blank"
             >
-                <div className="w-16 h-24 rounded-lg overflow-hidden" style={{ backgroundColor: `${accentColor}33` }}>
-                    {rec.coverMedium ? (
-                        <img
-                            alt={`Cover art for ${rec.title}`}
-                            className="w-full h-full object-cover"
-                            height={96}
-                            loading="lazy"
-                            src={rec.coverMedium}
-                            width={64}
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-2xl">📺</div>
-                    )}
-                </div>
+                {rec.coverMedium ? (
+                    <img
+                        alt={`Cover art for ${rec.title}`}
+                        className="h-full w-full object-cover"
+                        height={96}
+                        loading="lazy"
+                        src={rec.coverMedium}
+                        width={64}
+                    />
+                ) : (
+                    <span aria-hidden="true" className="flex h-full w-full items-center justify-center text-2xl">
+                        📺
+                    </span>
+                )}
             </a>
 
-            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-sm leading-tight line-clamp-2">{rec.title}</h3>
-                    {rec.siteUrl && (
-                        <a
-                            aria-label={t('card.viewOnAniList', { title: rec.title })}
-                            className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/60"
-                            href={rec.siteUrl}
-                            rel="noopener noreferrer"
-                            target="_blank"
-                        >
-                            <ExternalLink size={14} />
-                        </a>
-                    )}
-                </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <a
+                    className="line-clamp-2 rounded-sm text-sm font-semibold leading-tight outline-none transition-colors hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+                    href={rec.siteUrl ?? '#'}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                >
+                    <h3 className="pr-8">{rec.title}</h3>
+                </a>
 
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-wrap items-center gap-2">
                     <RecommendationBadge type={badgeFor(rec)} />
-                    {formatLabel && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
-                            {formatLabel}
-                        </span>
-                    )}
+                    {formatLabel && <Badge variant="secondary">{formatLabel}</Badge>}
                 </div>
 
                 <MediaScoreRow mode={mode} rec={rec} />
 
-                <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs text-muted-foreground">
                         {rec.watchCount > rec.friendCount
                             ? t('card.watchedAndRated', {
@@ -108,17 +102,18 @@ export const MediaCard: FC<MediaCardProps> = ({ className, mode, onDismiss, rec 
             </div>
 
             {onDismiss && (
-                <button
+                <Button
                     aria-label={t('card.dismiss', { title: rec.title })}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full flex items-center justify-center text-xs bg-accent text-muted-foreground/60"
+                    className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     onClick={() => {
                         onDismiss(rec.mediaId)
                     }}
-                    type="button"
+                    size="icon-xs"
+                    variant="secondary"
                 >
-                    ×
-                </button>
+                    <X />
+                </Button>
             )}
-        </article>
+        </Card>
     )
 }

@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 
 import { useIdentity } from '../../store/identity'
 import { ErrorBoundary } from '../ErrorBoundary'
+import { Toaster } from '../ui/sonner'
 import { AppHeader } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
 
@@ -45,6 +46,7 @@ export const RootLayout: FC = () => {
                     </ErrorBoundary>
                 </main>
             </div>
+            <Toaster richColors />
             {import.meta.env.DEV && <TanStackRouterDevtools />}
         </div>
     )

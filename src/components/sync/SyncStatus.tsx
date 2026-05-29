@@ -1,9 +1,13 @@
 import { RefreshCw } from 'lucide-react'
 import type { FC } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
+
+import { Button } from '../ui/button'
+import { Spinner } from '../ui/spinner'
 
 interface SyncStatusProps {
     className?: string
@@ -24,6 +28,7 @@ export const SyncStatus: FC<SyncStatusProps> = ({
 }) => {
     const { t } = useTranslation()
     const [now, setNow] = useState(Date.now)
+    const wasSyncingRef = useRef(isSyncing)
 
     useEffect(() => {
         const id = setInterval(() => {
@@ -33,6 +38,13 @@ export const SyncStatus: FC<SyncStatusProps> = ({
             clearInterval(id)
         }
     }, [])
+
+    useEffect(() => {
+        if (wasSyncingRef.current && !isSyncing) {
+            toast.success(t('sync.completeToast'))
+        }
+        wasSyncingRef.current = isSyncing
+    }, [isSyncing, t])
 
     const lastSyncLabel = lastSyncedAt
         ? new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
@@ -44,20 +56,23 @@ export const SyncStatus: FC<SyncStatusProps> = ({
     return (
         <div className={cn('flex items-center gap-3 text-sm text-muted-foreground', className)}>
             {isSyncing && progress ? (
-                <span>{t('sync.syncing', { current: progress.current, total: progress.total })}</span>
+                <span className="flex items-center gap-2">
+                    <Spinner />
+                    {t('sync.syncing', { current: progress.current, total: progress.total })}
+                </span>
             ) : (
                 <span>{t('sync.lastSynced', { time: lastSyncLabel })}</span>
             )}
-            <button
+            <Button
                 aria-label={t('sync.resyncAriaLabel')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 bg-secondary text-foreground"
                 disabled={isLoading}
                 onClick={onResync}
-                type="button"
+                size="sm"
+                variant="secondary"
             >
                 <RefreshCw aria-hidden="true" className={cn(isLoading && 'animate-spin')} size={12} />
                 {t('sync.resync')}
-            </button>
+            </Button>
         </div>
     )
 }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 import type { FriendInfo } from '../../lib/recommendations'
+import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount, AvatarImage } from '../ui/avatar'
 
 interface FriendAvatarStackProps {
     className?: string
@@ -24,33 +25,18 @@ export const FriendAvatarStack: FC<FriendAvatarStackProps> = ({ className, frien
     const overflow = friends.length - visible.length
 
     return (
-        <div
+        <AvatarGroup
             aria-label={t('card.friendStackLabel', { count: friends.length })}
-            className={cn('flex items-center', className)}
+            className={cn(className)}
+            data-size="sm"
         >
-            <div className="flex -space-x-2">
-                {visible.map((friend) => (
-                    <div
-                        className="w-6 h-6 rounded-full ring-2 ring-card overflow-hidden flex items-center justify-center text-[10px] font-bold bg-secondary text-muted-foreground"
-                        key={friend.id}
-                        title={friend.name}
-                    >
-                        {friend.avatarUrl ? (
-                            <img
-                                alt=""
-                                className="w-full h-full object-cover"
-                                height={24}
-                                loading="lazy"
-                                src={friend.avatarUrl}
-                                width={24}
-                            />
-                        ) : (
-                            friend.name.charAt(0).toUpperCase()
-                        )}
-                    </div>
-                ))}
-            </div>
-            {overflow > 0 && <span className="ml-1.5 text-xs text-muted-foreground">+{overflow}</span>}
-        </div>
+            {visible.map((friend) => (
+                <Avatar key={friend.id} size="sm" title={friend.name}>
+                    {friend.avatarUrl && <AvatarImage alt="" src={friend.avatarUrl} />}
+                    <AvatarFallback>{friend.name.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+            ))}
+            {overflow > 0 && <AvatarGroupCount>+{overflow}</AvatarGroupCount>}
+        </AvatarGroup>
     )
 }

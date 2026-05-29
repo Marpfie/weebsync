@@ -12,10 +12,20 @@
 - authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
 - better status indication
     - visible animated progress bar of the loading queries
-    - the status should also work on initial data load, not just for requeries
-        - "Last synced: Never" despite snycing initially
+    - visible pause state for the progress bar when the rate limit is reached
+    - make use of "Sonner" for notifying about errors, status changes and finished syncing
 - to combat the rough API limits, maybe the ANIME queries are prioritized, and manga comes last.
+    - users own list ALWAYS has priority and needs to be completed over any other query
     - add a setting on what to prio so the user can get quicker feedback on what matters to them
+    - navigating between the different tabs should not requery anime/manga lists from Anilist
+- language options
+    - new languages with i18n
+- "Last synced: 47,023 minutes ago" should switch to hours/days after X hours and days
+    - this message is also incorrect if a normal sync happened
+        - the status should also work on initial data load, not just for requeries
+        - "Last synced: Never" despite snycing initially
+    - visiting the page should NOT resync data automatically. even when switching users, as long as the data for the entered/logged in user already exists
+        - !!! Users own list needs to be cached as well r ather than always requested. if the request fails the UI shows wrong data. (not on your list)
 
 - rate how much you agree with your friends
     - a separate page that gives you an overview of your overlap with other people. this could be used as an indication for who to include in friend ratings. or possibly even for weights later

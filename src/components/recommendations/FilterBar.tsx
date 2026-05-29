@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 
+import { Checkbox } from '../ui/checkbox'
+import { Label } from '../ui/label'
+
 export type SortOption = 'friends' | 'score'
 
 interface FilterBarProps {
@@ -16,17 +19,16 @@ export const FilterBar: FC<FilterBarProps> = ({ className, onBacklogToggle, show
 
     return (
         <div className={cn('flex items-center gap-3 flex-wrap', className)}>
-            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                <input
+            <Label className="cursor-pointer" htmlFor="filter-backlog-only">
+                <Checkbox
                     checked={showBacklogOnly}
-                    className="w-4 h-4 rounded accent-primary"
-                    onChange={(event) => {
-                        onBacklogToggle(event.target.checked)
+                    id="filter-backlog-only"
+                    onCheckedChange={(checked) => {
+                        onBacklogToggle(checked)
                     }}
-                    type="checkbox"
                 />
-                <span className="text-muted-foreground">{t('recs.backlogOnly')}</span>
-            </label>
+                <span className="text-muted-foreground font-normal">{t('recs.backlogOnly')}</span>
+            </Label>
         </div>
     )
 }

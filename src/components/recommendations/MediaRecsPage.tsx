@@ -6,6 +6,7 @@ import type { MediaType, Recommendation } from '../../lib/recommendations'
 import { usePreferences } from '../../store/preferences'
 import { FilterBar } from '../recommendations/FilterBar'
 import { SyncStatus } from '../sync/SyncStatus'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../ui/empty'
 import { RecommendationsGrid } from './RecommendationsGrid'
 
 interface MediaRecsPageProps {
@@ -56,11 +57,15 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({
             {isLoading ? (
                 <RecommendationsGrid isLoading mediaType={mediaType} recs={[]} />
             ) : (view.visible.length === 0 ? (
-                <div className="rounded-xl py-16 text-center bg-card border border-border">
-                    <p className="text-4xl mb-3">🌱</p>
-                    <p className="font-medium">{t('recs.empty')}</p>
-                    <p className="text-sm mt-1 text-muted-foreground">{t('recs.emptyDetail', context)}</p>
-                </div>
+                <Empty>
+                    <EmptyHeader>
+                        <EmptyMedia>
+                            <p className="text-4xl">🌱</p>
+                        </EmptyMedia>
+                        <EmptyTitle>{t('recs.empty')}</EmptyTitle>
+                        <EmptyDescription>{t('recs.emptyDetail', context)}</EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
                 <>
                     {view.backlog.length > 0 && (

@@ -2,6 +2,11 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar'
+import { Button } from '../components/ui/button'
+import { Card } from '../components/ui/card'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
 import { useAuth } from '../hooks/useAuth'
 import { useUserByName } from '../hooks/useUserByName'
 import { setGuestIdentity } from '../store/identity'
@@ -70,14 +75,14 @@ const LandingPage = () => {
                 <p className="text-xl mb-8 font-light text-muted-foreground">{t('login.tagline')}</p>
 
                 <form className="rounded-2xl p-6 mb-4 text-left bg-card border border-border" onSubmit={handleSubmit}>
-                    <label className="block text-sm font-medium mb-2" htmlFor="anilist-username">
+                    <Label className="mb-2" htmlFor="anilist-username">
                         {t('login.usernameLabel')}
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                         autoCapitalize="off"
                         autoComplete="off"
                         autoCorrect="off"
-                        className="w-full px-3.5 py-2.5 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-base"
+                        className="h-11 text-base"
                         id="anilist-username"
                         onChange={(event) => {
                             setUsername(event.target.value)
@@ -94,64 +99,50 @@ const LandingPage = () => {
                         ) : null}
                         {matchedUser && isExactMatch ? (
                             <div className="flex items-center gap-3">
-                                {matchedUser.avatar?.medium ? (
-                                    <img
-                                        alt=""
-                                        className="w-10 h-10 rounded-full object-cover"
-                                        height={40}
-                                        src={matchedUser.avatar.medium}
-                                        width={40}
-                                    />
-                                ) : null}
+                                <Avatar size="lg">
+                                    {matchedUser.avatar?.medium && (
+                                        <AvatarImage alt="" src={matchedUser.avatar.medium} />
+                                    )}
+                                    <AvatarFallback>{matchedUser.name[0].toUpperCase()}</AvatarFallback>
+                                </Avatar>
                                 <span className="font-medium">{matchedUser.name}</span>
                             </div>
                         ) : null}
                         {matchedUser && !isExactMatch ? (
-                            <button
+                            <Button
                                 aria-label={t('login.useSuggestion', { name: matchedUser.name })}
-                                className="flex items-center gap-3 w-full text-left rounded-lg p-1 -m-1 hover:bg-secondary transition-colors"
+                                className="h-auto w-full justify-start p-1 -m-1"
                                 onClick={() => {
                                     setUsername(matchedUser.name)
                                 }}
-                                type="button"
+                                variant="ghost"
                             >
-                                {matchedUser.avatar?.medium ? (
-                                    <img
-                                        alt=""
-                                        className="w-10 h-10 rounded-full object-cover"
-                                        height={40}
-                                        src={matchedUser.avatar.medium}
-                                        width={40}
-                                    />
-                                ) : null}
+                                <Avatar size="lg">
+                                    {matchedUser.avatar?.medium && (
+                                        <AvatarImage alt="" src={matchedUser.avatar.medium} />
+                                    )}
+                                    <AvatarFallback>{matchedUser.name[0].toUpperCase()}</AvatarFallback>
+                                </Avatar>
                                 <span className="flex flex-col">
                                     <span className="font-medium">{matchedUser.name}</span>
                                     <span className="text-xs text-muted-foreground">{t('login.didYouMean')}</span>
                                 </span>
-                            </button>
+                            </Button>
                         ) : null}
                         {lookupFailed ? <p className="text-destructive">{t('login.lookupNotFound')}</p> : null}
                         {lookup.error ? <p className="text-destructive">{t('login.lookupError')}</p> : null}
                     </div>
 
-                    <button
-                        className="w-full mt-2 py-3 px-6 rounded-xl font-semibold text-base text-primary-foreground bg-primary transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={!isExactMatch}
-                        type="submit"
-                    >
+                    <Button className="w-full mt-2 h-11 text-base" disabled={!isExactMatch} type="submit">
                         {t('login.continueAsGuest')}
-                    </button>
+                    </Button>
                 </form>
 
-                <button
-                    className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-                    onClick={login}
-                    type="button"
-                >
+                <Button className="text-sm text-muted-foreground" onClick={login} variant="link">
                     {t('login.loginInstead')}
-                </button>
+                </Button>
 
-                <div className="rounded-2xl p-6 mt-8 text-left bg-card border border-border">
+                <Card className="mt-8 p-6 text-left">
                     <h2 className="font-semibold mb-3">{t('login.howItWorks')}</h2>
                     <ol className="space-y-2 text-sm text-muted-foreground">
                         <li>1. {t('login.step1')}</li>
@@ -159,7 +150,7 @@ const LandingPage = () => {
                         <li>3. {t('login.step3')}</li>
                         <li>4. {t('login.step4')}</li>
                     </ol>
-                </div>
+                </Card>
 
                 <p className="mt-4 text-xs text-muted-foreground/60">{t('login.privacyNote')}</p>
             </div>

@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 
+import { ScrollArea } from '../ui/scroll-area'
+
 const NAV_LINKS = [
     { icon: LayoutDashboard, labelKey: 'nav.dashboard', to: '/dashboard' },
     { icon: Clapperboard, labelKey: 'nav.anime', to: '/anime' },
@@ -21,25 +23,31 @@ export const AppSidebar: FC = () => {
     return (
         <nav
             aria-label="Main navigation"
-            className="hidden md:flex flex-col w-56 shrink-0 py-6 px-3 gap-1 bg-card border-r border-border"
+            className="hidden md:flex flex-col w-56 shrink-0 bg-card border-r border-border"
         >
-            {NAV_LINKS.map(({ icon: Icon, labelKey, to }) => {
-                const isActive = pathname.startsWith(to)
-                return (
-                    <Link
-                        aria-current={isActive ? 'page' : undefined}
-                        className={cn(
-                            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
-                            isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'
-                        )}
-                        key={to}
-                        to={to}
-                    >
-                        <Icon aria-hidden="true" size={18} />
-                        {t(labelKey)}
-                    </Link>
-                )
-            })}
+            <ScrollArea className="flex-1">
+                <div className="flex flex-col gap-1 py-6 px-3">
+                    {NAV_LINKS.map(({ icon: Icon, labelKey, to }) => {
+                        const isActive = pathname.startsWith(to)
+                        return (
+                            <Link
+                                aria-current={isActive ? 'page' : undefined}
+                                className={cn(
+                                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
+                                    isActive
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:bg-secondary'
+                                )}
+                                key={to}
+                                to={to}
+                            >
+                                <Icon aria-hidden="true" size={18} />
+                                {t(labelKey)}
+                            </Link>
+                        )
+                    })}
+                </div>
+            </ScrollArea>
         </nav>
     )
 }

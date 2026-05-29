@@ -47,6 +47,9 @@
     "friends": {
         "avatarAlt": "{{name}}'s avatar",
         "excludeAriaLabel": "Exclude {{name}}",
+        "emptyDescription": "Follow some users on AniList and resync. They'll appear here so you can include or exclude their ratings.",
+        "emptyTitle": "No friends yet",
+        "errorTitle": "Couldn't load your following list",
         "excluded": "Excluded",
         "includeAriaLabel": "Include {{name}}",
         "included": "Included",
@@ -63,7 +66,10 @@
         "avatarAlt": "{{name}}'s avatar",
         "guestBadge": "Guest",
         "logout": "Sign out",
-        "switchUser": "Switch user"
+        "modeAuthed": "Signed in with AniList",
+        "modeGuest": "Browsing as guest",
+        "switchUser": "Switch user",
+        "userMenuAriaLabel": "Open user menu"
     },
     "login": {
         "continueAsGuest": "Continue",
@@ -148,6 +154,7 @@
         "topRated": "Top rated"
     },
     "sync": {
+        "completeToast": "Friends resynced",
         "lastSynced": "Last synced: {{time}}",
         "never": "Never",
         "resync": "Resync",
