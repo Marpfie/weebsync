@@ -121,4 +121,14 @@ export default defineConfig([
             ],
         },
     },
+    {
+        // TanStack Router route files export both a `Route` object (required by the
+        // file-based router) and define the component inline. That mixed shape trips
+        // `react-refresh/only-export-components`, which is meaningless for route files
+        // since Vite's HMR for routes is handled by the router plugin itself.
+        files: ['src/routes/**/*.{ts,tsx}'],
+        rules: {
+            'react-refresh/only-export-components': 'off',
+        },
+    },
 ])
