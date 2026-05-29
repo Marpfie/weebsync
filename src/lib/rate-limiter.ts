@@ -1,29 +1,26 @@
-import { ServerError } from '@apollo/client'
 import PQueue from 'p-queue'
 
 /**
  * Rate limiter for the AniList API.
  *
- * AniList currently enforces a degraded ~30 req/min limit (normally 90); we
- * use a conservative static `intervalCap` of 29 that fits comfortably under
- * both, and rely on the headers from each response for the *important* gate:
- * proactively pausing when the server says we're about to be rate-limited.
+ * AniList enforces ~30 req/min (degraded; normally 90). We run the queue at
+ * `concurrency: 1` with no p-queue interval throttle — instead the fetch
+ * interceptor owns all pause logic as a single source of truth:
  *
- * Three layers of defence against 429s:
- *   1. Conservative static `intervalCap` so we cap our own enqueue rate.
- *   2. Proactive pause when `X-RateLimit-Remaining` drops to ≤ 1, resuming
- *      at `X-RateLimit-Reset` (+ a small clock-skew buffer).
- *   3. 429 retry with backoff as a last-resort fallback if 1 and 2 both miss.
- *
- * NOTE: `intervalCap` is private, so it can't be mutated at
- * runtime.
+ *   1. On every AniList response, mirror `X-RateLimit-Limit / Remaining /
+ *      Reset` onto the snapshot so the UI can display live quota state.
+ *   2. When `remaining === 0`, explicitly pause the queue until the estimated
+ *      window reset so the UI shows a countdown instead of going silent.
+ *   3. On any 429 (or CORS-stripped 429 surfacing as TypeError), pause for
+ *      70s — a buffer past the 60s window to clear AniList's penalty box.
+ *   4. `withRetry` only waits for the active pause; the interceptor is the
+ *      single source of truth for when to stop and when to resume.
  */
 
-const INTERVAL_CAP = 29
 const RESUME_BUFFER_MS = 500
 const MAX_RETRIES = 5
 
-const queue = new PQueue({ concurrency: 1, interval: 60_000, intervalCap: INTERVAL_CAP })
+const queue = new PQueue({ concurrency: 1 })
 
 export const PRIORITY = {
     FOLLOWING: 80,
@@ -36,8 +33,12 @@ export const PRIORITY = {
 export type Priority = (typeof PRIORITY)[keyof typeof PRIORITY]
 
 export interface RateLimitState {
-    /** Static per-minute capacity. Useful for ETA calculations. */
-    intervalCap: number
+    /** Observed AniList window cap from `X-RateLimit-Limit` (e.g. 30 or 90). */
+    observedLimit: null | number
+    /** Observed `X-RateLimit-Remaining` from the last response. */
+    observedRemaining: null | number
+    /** Unix-ms when the observed window resets (from `X-RateLimit-Reset`). */
+    observedResetAt: null | number
     paused: boolean
     /** Pending + running tasks. Drives ETA + progress UI. */
     queueSize: number
@@ -46,6 +47,9 @@ export interface RateLimitState {
 
 const state = {
     listeners: new Set<() => void>(),
+    observedLimit: null as null | number,
+    observedRemaining: null as null | number,
+    observedResetAt: null as null | number,
     paused: false,
     queueSize: 0,
     resumesAt: null as null | number,
@@ -55,7 +59,9 @@ const state = {
 // so handing out a new object on every read causes an infinite render loop.
 // Rebuilt only when the underlying values change.
 let cachedSnapshot: RateLimitState = {
-    intervalCap: INTERVAL_CAP,
+    observedLimit: null,
+    observedRemaining: null,
+    observedResetAt: null,
     paused: false,
     queueSize: 0,
     resumesAt: null,
@@ -63,7 +69,9 @@ let cachedSnapshot: RateLimitState = {
 
 const rebuildSnapshot = (): void => {
     cachedSnapshot = {
-        intervalCap: INTERVAL_CAP,
+        observedLimit: state.observedLimit,
+        observedRemaining: state.observedRemaining,
+        observedResetAt: state.observedResetAt,
         paused: state.paused,
         queueSize: state.queueSize,
         resumesAt: state.resumesAt,
@@ -106,8 +114,17 @@ const setPausedState = (paused: boolean, resumesAt: null | number): void => {
 
 let resumeTimer: null | ReturnType<typeof setTimeout> = null
 
-const scheduleResume = (resetUnixSeconds: number): void => {
-    const resumesAt = resetUnixSeconds * 1000 + RESUME_BUFFER_MS
+/**
+ * Pause the queue until the given wall-clock timestamp. Used by the fetch
+ * interceptor on every 429 / CORS-throw, and idempotent against shorter
+ * pauses so back-to-back failures can't accidentally shrink an in-flight
+ * pause window.
+ */
+const ts = () => new Date().toISOString().slice(11, 23) // HH:MM:SS.mmm
+
+const pauseUntil = (resumesAt: number): void => {
+    if (state.paused && state.resumesAt !== null && state.resumesAt >= resumesAt) return
+
     const delay = Math.max(0, resumesAt - Date.now())
 
     queue.pause()
@@ -115,11 +132,21 @@ const scheduleResume = (resetUnixSeconds: number): void => {
 
     if (resumeTimer) clearTimeout(resumeTimer)
     resumeTimer = setTimeout(() => {
+        console.info(`[rate-limiter ${ts()}] resumed`)
         queue.start()
         setPausedState(false, null)
         resumeTimer = null
     }, delay)
 }
+
+/** Length of one AniList rate-limit window. */
+const WINDOW_MS = 60_000
+/**
+ * How long we pause after any 429 / CORS-throw. A small buffer past the
+ * 60s window avoids retrying right at the reset boundary, which empirically
+ * still triggers a second CORS hit.
+ */
+const FULL_WINDOW_MS = WINDOW_MS + 10_000 // 70s
 
 const sleep = (ms: number) =>
     new Promise<void>((resolve) => {
@@ -127,27 +154,72 @@ const sleep = (ms: number) =>
     })
 
 /**
- * Inspect rate-limit headers from any AniList response (success or 429).
- * Triggers proactive pause when nearing the cap.
+ * Inspect rate-limit headers from any AniList response. Stores the observed
+ * window state on the snapshot so the UI can display it; pause policy is
+ * driven exclusively from the fetch interceptor (see below) so there is one
+ * unambiguous source of truth.
  */
 const readRateLimitHeaders = (headers: Headers): void => {
+    const limitRaw = headers.get('x-ratelimit-limit')
     const remainingRaw = headers.get('x-ratelimit-remaining')
     const resetRaw = headers.get('x-ratelimit-reset')
 
-    if (remainingRaw && resetRaw) {
-        const remaining = Number.parseInt(remainingRaw, 10)
-        const reset = Number.parseInt(resetRaw, 10)
-        if (Number.isFinite(remaining) && Number.isFinite(reset) && remaining <= 1) {
-            scheduleResume(reset)
+    let changed = false
+
+    if (limitRaw) {
+        const limit = Number.parseInt(limitRaw, 10)
+        if (Number.isFinite(limit) && state.observedLimit !== limit) {
+            state.observedLimit = limit
+            changed = true
         }
+    }
+
+    if (remainingRaw) {
+        const parsed = Number.parseInt(remainingRaw, 10)
+        if (Number.isFinite(parsed) && state.observedRemaining !== parsed) {
+            // Detect new window: remaining went up (p-queue interval expired and a
+            // fresh window started) or this is the very first request of a window
+            // (remaining === limit - 1). AniList only sends X-RateLimit-Reset on
+            // 429 responses, so we derive an estimated reset from window-start time.
+            const prev = state.observedRemaining
+            const isNewWindow =
+                (prev !== null && parsed > prev) ||
+                (state.observedLimit !== null && parsed === state.observedLimit - 1)
+            if (isNewWindow && !resetRaw) {
+                state.observedResetAt = Date.now() + WINDOW_MS
+                changed = true
+            }
+            state.observedRemaining = parsed
+            changed = true
+        }
+    }
+
+    if (resetRaw) {
+        const parsed = Number.parseInt(resetRaw, 10)
+        if (Number.isFinite(parsed)) {
+            const resetMs = parsed * 1000
+            if (state.observedResetAt !== resetMs) {
+                state.observedResetAt = resetMs
+                changed = true
+            }
+        }
+    }
+
+    if (changed) {
+        rebuildSnapshot()
+        notify()
     }
 }
 
 /**
  * Apollo's `client.query()` resolves with the parsed payload, so we lose the
  * raw Response and its headers. We intercept `globalThis.fetch` once on first
- * use to mirror rate-limit headers into the limiter regardless of which
- * transport invokes them.
+ * use to mirror rate-limit headers into the limiter and — critically — to
+ * enforce a single pause policy: on any AniList 429 or thrown error
+ * (CORS-stripped 429s surface as TypeError), pause the entire queue for one
+ * full window measured *from now*. Trusting `X-RateLimit-Reset` for retry
+ * timing turned out to be a footgun because AniList keeps throttling past
+ * the advertised reset when you're in their burst-limit penalty box.
  */
 const installFetchInterceptor = (() => {
     let installed = false
@@ -156,14 +228,53 @@ const installFetchInterceptor = (() => {
         installed = true
         const original = globalThis.fetch.bind(globalThis)
         globalThis.fetch = async (...arguments_) => {
-            const response = await original(...arguments_)
             const first = arguments_[0]
             let url = ''
             if (typeof first === 'string') url = first
             else if (first instanceof URL) url = first.href
             else if (first instanceof Request) url = first.url
-            if (url.includes('graphql.anilist.co')) readRateLimitHeaders(response.headers)
-            return response
+            const isAnilist = url.includes('graphql.anilist.co')
+
+            try {
+                const response = await original(...arguments_)
+                if (isAnilist) {
+                    readRateLimitHeaders(response.headers)
+                    const limit = response.headers.get('x-ratelimit-limit')
+                    const remaining = response.headers.get('x-ratelimit-remaining')
+                    const reset = response.headers.get('x-ratelimit-reset')
+                    const resetIn = reset
+                        ? Math.max(0, Math.ceil((Number(reset) * 1000 - Date.now()) / 1000))
+                        : null
+                    if (response.status === 429) {
+                        console.warn(
+                            `[rate-limiter ${ts()}] 429 — limit=${limit} remaining=${remaining} reset=${resetIn}s — pausing ${FULL_WINDOW_MS}ms`,
+                        )
+                        pauseUntil(Date.now() + FULL_WINDOW_MS)
+                    } else {
+                        console.debug(
+                            `[rate-limiter ${ts()}] ${response.status} — limit=${limit} remaining=${remaining} reset=${resetIn}s`,
+                        )
+                        // When the last slot is consumed (remaining === 0) and there is
+                        // still work queued, explicitly pause so the UI shows a countdown.
+                        // Without p-queue's own interval throttle this fires cleanly right
+                        // after the 30th request; no silent stall to work around.
+                        if (remaining === '0' && !state.paused) {
+                            const until = state.observedResetAt ?? Date.now() + WINDOW_MS
+                            console.info(
+                                `[rate-limiter ${ts()}] quota exhausted — pausing until window reset (~${Math.ceil((until - Date.now()) / 1000)}s)`,
+                            )
+                            pauseUntil(until)
+                        }
+                    }
+                }
+                return response
+            } catch (error) {
+                if (isAnilist) {
+                    console.warn(`[rate-limiter ${ts()}] fetch threw (CORS/network) — pausing ${FULL_WINDOW_MS}ms`)
+                    pauseUntil(Date.now() + FULL_WINDOW_MS)
+                }
+                throw error
+            }
         }
     }
 })()
@@ -180,28 +291,16 @@ async function withRetry<T>(function_: () => Promise<T>): Promise<T> {
         } catch (error: unknown) {
             if (attempt >= MAX_RETRIES) throw error
 
-            if (!ServerError.is(error) || error.statusCode !== 429) throw error
+            // The fetch interceptor is the single source of truth for pause
+            // policy: it already set a 60s pause if this was a 429 or a
+            // CORS-stripped 429 (TypeError). If we aren't paused, this is a
+            // genuine error — propagate it instead of swallowing.
+            const { paused, resumesAt } = state
+            if (!paused || resumesAt === null) throw error
 
-            readRateLimitHeaders(error.response.headers)
-
-            // AniList sends X-RateLimit-Reset (Unix timestamp, seconds) on 429.
-            // Retry-After (seconds delay) is a fallback in case they ever switch.
-            // Both headers may be absent if CORS does not expose them; exponential backoff is used then.
-            const retryAfter = error.response.headers.get('retry-after')
-            const resetAt = error.response.headers.get('x-ratelimit-reset')
-
-            let retryDelayMs: number
-
-            if (retryAfter) {
-                retryDelayMs = Number.parseInt(retryAfter, 10) * 1000
-            } else if (resetAt) {
-                retryDelayMs = Math.max(1000, Number.parseInt(resetAt, 10) * 1000 - Date.now())
-            } else {
-                retryDelayMs = Math.min(attempt * 7500, 60_000)
-            }
-
-            console.warn(`[rate-limiter] 429 — retrying in ${retryDelayMs}ms (attempt ${attempt + 1})`)
-            await sleep(retryDelayMs + RESUME_BUFFER_MS)
+            const waitMs = Math.max(0, resumesAt - Date.now()) + RESUME_BUFFER_MS
+            console.warn(`[rate-limiter ${ts()}] paused — retrying in ${waitMs}ms (attempt ${attempt + 1})`)
+            await sleep(waitMs)
         }
     }
 

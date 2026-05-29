@@ -69,24 +69,28 @@ export const AppHeader: FC = () => {
 
     const failedCount = failedFriendIds.anime.length + failedFriendIds.manga.length
 
-    // Keep ETA / pause-countdown labels ticking once per second while either
-    // a sync is in flight or the rate-limiter is paused.
+    const quotaLow =
+        rateLimit.observedRemaining !== null && rateLimit.observedLimit !== null
+            ? rateLimit.observedRemaining <= Math.max(3, Math.floor(rateLimit.observedLimit * 0.15))
+            : false
+
     const now = useNowTick(syncBusy || rateLimit.paused)
 
     const pauseSecondsRemaining =
         rateLimit.paused && rateLimit.resumesAt ? Math.max(0, Math.ceil((rateLimit.resumesAt - now) / 1000)) : 0
 
-    // ETA assumes a steady drain of `intervalCap` requests per minute.
-    const etaSeconds =
-        showProgress && rateLimit.queueSize > 0
-            ? Math.ceil(rateLimit.queueSize / Math.max(1, rateLimit.intervalCap)) * 60
-            : 0
-    let etaLabel: null | string = null
-    if (etaSeconds >= 60) {
-        etaLabel = t('header.etaMinutes', { count: Math.ceil(etaSeconds / 60) })
-    } else if (etaSeconds > 0) {
-        etaLabel = t('header.etaSeconds', { count: etaSeconds })
-    }
+    // x/30 badge: dev only, only while a sync is in flight, never while paused.
+    const isDev = import.meta.env.DEV
+    const showQuota =
+        isDev &&
+        !rateLimit.paused &&
+        syncBusy &&
+        rateLimit.observedLimit !== null &&
+        rateLimit.observedRemaining !== null
+
+    // Show the rate-limited badge only on an actual hard pause (429 / CORS throw).
+    const showRateLimited = rateLimit.paused
+    const rateLimitResumeSeconds = pauseSecondsRemaining
 
     const lastSyncedLabel = lastSyncedAt
         ? (() => {
@@ -104,9 +108,22 @@ export const AppHeader: FC = () => {
                 </Link>
 
                 <div className="flex items-center gap-2">
-                    {rateLimit.paused && (
+                    {showQuota && rateLimit.observedRemaining !== null && rateLimit.observedLimit !== null && (
+                        <Badge
+                            aria-label={t('header.quotaLabel')}
+                            className="tabular-nums"
+                            variant={quotaLow ? 'destructive' : 'outline'}
+                        >
+                            {t('header.quotaValue', {
+                                limit: rateLimit.observedLimit,
+                                remaining: rateLimit.observedRemaining,
+                            })}
+                        </Badge>
+                    )}
+
+                    {showRateLimited && (
                         <Badge variant="destructive">
-                            {t('header.rateLimited', { seconds: pauseSecondsRemaining })}
+                            {t('header.rateLimited', { seconds: rateLimitResumeSeconds })}
                         </Badge>
                     )}
 
@@ -228,10 +245,6 @@ export const AppHeader: FC = () => {
                     <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                         {progressCurrent}/{progressTotal}
                     </span>
-                    <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                        {progressCurrent}/{progressTotal}
-                    </span>
-                    {etaLabel && <span className="text-xs text-muted-foreground shrink-0">{etaLabel}</span>}
                 </div>
             )}
         </header>
