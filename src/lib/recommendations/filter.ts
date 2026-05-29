@@ -13,7 +13,8 @@ export const isUserInProgress = (status: string | undefined): boolean => IN_PROG
 /**
  * Filters raw friend entries down to the set that should influence scoring:
  * - drops excluded friends
- * - drops statuses we don't count (always allows COMPLETED, optionally allows CURRENT)
+ * - keeps `COMPLETED` always; keeps `CURRENT` when the per-format toggle is on
+ * - keeps any additional statuses (PAUSED / DROPPED / REPEATING) the user opted into
  *
  * Scoring threshold (`minScoreThreshold`) is applied later — this keeps the
  * "watched but unrated" entries available for watch-count calculation.
@@ -21,13 +22,16 @@ export const isUserInProgress = (status: string | undefined): boolean => IN_PROG
 export const filterFriendRatings = (
     ratings: readonly FriendRating[],
     excludedFriendIds: readonly number[],
-    includeCurrentFriendEntries: boolean
+    includeCurrentFriendEntries: boolean,
+    additionalStatuses: readonly string[] = []
 ): FriendRating[] => {
     const excluded = new Set(excludedFriendIds)
+    const extra = new Set(additionalStatuses)
     return ratings.filter((r) => {
         if (excluded.has(r.friendId)) return false
         if (r.status === 'COMPLETED') return true
         if (r.status === 'CURRENT' && includeCurrentFriendEntries) return true
+        if (extra.has(r.status)) return true
         return false
     })
 }

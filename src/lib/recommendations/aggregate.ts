@@ -19,16 +19,28 @@ export interface MediaAggregate {
 /** Subset of media metadata derivable from a `FriendRating`. Shape matches `UserMediaEntry`. */
 type SourceMeta = Pick<
     UserMediaEntry,
-    'averageScore' | 'chapters' | 'coverMedium' | 'episodes' | 'format' | 'genres' | 'mediaStatus' | 'siteUrl' | 'title'
+    | 'averageScore'
+    | 'chapters'
+    | 'countryOfOrigin'
+    | 'coverMedium'
+    | 'episodes'
+    | 'format'
+    | 'genres'
+    | 'isAdult'
+    | 'mediaStatus'
+    | 'siteUrl'
+    | 'title'
 >
 
 const buildSourceMeta = (r: FriendRating): SourceMeta => ({
     averageScore: r.averageScore ?? null,
     chapters: r.chapters ?? null,
+    countryOfOrigin: r.countryOfOrigin ?? null,
     coverMedium: r.mediaCover ?? null,
     episodes: r.episodes ?? null,
     format: r.mediaFormat ?? null,
     genres: r.genres ?? null,
+    isAdult: r.isAdult ?? null,
     mediaStatus: r.mediaStatus ?? null,
     siteUrl: r.siteUrl ?? null,
     title: r.mediaTitle ?? `Media #${r.mediaId}`,

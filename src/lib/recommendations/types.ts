@@ -14,9 +14,11 @@ export interface FriendInfo {
 export interface FriendRating {
     averageScore?: null | number
     chapters?: null | number
+    countryOfOrigin?: null | string
     episodes?: null | number
     friendId: number
     genres?: (null | string)[] | null
+    isAdult?: boolean | null
     mediaCover?: null | string
     mediaFormat?: null | string
     mediaId: number
@@ -40,6 +42,7 @@ export interface Recommendation {
     /** AniList community average score (0–100). */
     anilistScore: null | number
     chapters: null | number
+    countryOfOrigin: null | string
     coverColor: null | string
     coverLarge: null | string
     coverMedium: null | string
@@ -52,6 +55,7 @@ export interface Recommendation {
     /** Pure average of friend scores (0–10), no AniList influence. */
     friendRawAvg: null | number
     genres: (null | string)[] | null
+    isAdult: boolean | null
     isAlreadyStarted: boolean
     isInPlanList: boolean
     mediaId: number
@@ -74,6 +78,8 @@ export type RecommendationMode = 'friend-favourites' | 'friends-only' | 'most-ag
 
 /** Input bundle for `buildRecommendations`. All slices are read-only. */
 export interface RecommendationsInput {
+    /** Extra `MediaListStatus` values (PAUSED/DROPPED/REPEATING) to include beyond the defaults. */
+    additionalStatuses?: readonly string[]
     dismissedIds: readonly number[]
     excludedFriendIds: readonly number[]
     friendInfoById: ReadonlyMap<number, FriendInfo>
@@ -88,12 +94,14 @@ export interface RecommendationsInput {
 export interface UserMediaEntry {
     averageScore: null | number
     chapters: null | number
+    countryOfOrigin: null | string
     coverColor: null | string
     coverLarge: null | string
     coverMedium: null | string
     episodes: null | number
     format: null | string
     genres: (null | string)[] | null
+    isAdult: boolean | null
     mediaId: number
     mediaStatus: null | string
     score: null | number | undefined

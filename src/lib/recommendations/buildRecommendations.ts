@@ -23,6 +23,7 @@ export const buildRecommendations = (
     config: ScoringConfig = DEFAULT_SCORING_CONFIG
 ): Recommendation[] => {
     const {
+        additionalStatuses,
         dismissedIds,
         excludedFriendIds,
         friendInfoById,
@@ -36,7 +37,12 @@ export const buildRecommendations = (
     const dismissedSet = new Set(dismissedIds)
     const scoreFor = SCORING_STRATEGIES[mode]
 
-    const eligibleRatings = filterFriendRatings(friendRatings, excludedFriendIds, includeCurrentFriendEntries)
+    const eligibleRatings = filterFriendRatings(
+        friendRatings,
+        excludedFriendIds,
+        includeCurrentFriendEntries,
+        additionalStatuses
+    )
     const { entryByMediaId, statusByMediaId } = indexUserEntries(userEntries)
     const aggregatesByMedia = groupByMedia(eligibleRatings, config.minScoreThreshold)
 
@@ -71,6 +77,7 @@ export const buildRecommendations = (
         out.push({
             anilistScore,
             chapters: userEntry?.chapters ?? aggregate.sourceMeta.chapters ?? null,
+            countryOfOrigin: userEntry?.countryOfOrigin ?? aggregate.sourceMeta.countryOfOrigin ?? null,
             coverColor: userEntry?.coverColor ?? null,
             coverLarge: userEntry?.coverLarge ?? null,
             coverMedium: userEntry?.coverMedium ?? aggregate.sourceMeta.coverMedium ?? null,
@@ -80,6 +87,7 @@ export const buildRecommendations = (
             friendCount,
             friendRawAvg,
             genres: userEntry?.genres ?? aggregate.sourceMeta.genres ?? null,
+            isAdult: userEntry?.isAdult ?? aggregate.sourceMeta.isAdult ?? null,
             isAlreadyStarted,
             isInPlanList,
             mediaId,

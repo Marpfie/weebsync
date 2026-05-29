@@ -13,6 +13,8 @@ query FriendMediaLists($userId: Int!, $type: MediaType!) {
                     type
                     format
                     status
+                    countryOfOrigin
+                    isAdult
                     siteUrl
                     title {
                         romaji

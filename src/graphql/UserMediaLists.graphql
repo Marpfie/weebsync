@@ -14,6 +14,8 @@ query UserMediaLists($userId: Int!, $type: MediaType!) {
                     type
                     format
                     status
+                    countryOfOrigin
+                    isAdult
                     episodes
                     chapters
                     volumes
