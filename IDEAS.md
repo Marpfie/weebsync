@@ -1,14 +1,9 @@
-- Search Bar for friends page
-- mass toggle friends, to allow user to easily include only specific ones
 - Search bar in anime/manga pages
-- Limit default amount of media listed
-    - "show more" button incrementally
-- Add "back to top" button for the infinitely growing list pages
-- better filtering for status lists
-    - filter settings for types of anime/manga
-    - movie/anime/ova etc.
-    - manga/doujin?/korean/chinese etc.
-- double baylesian rating?
+- Rethink media recs page layout:
+    - Replace separate "Backlog" / "New discoveries" sections + "Backlog only" checkbox with a single unified list
+    - Add a "Status" filter dropdown: All / Backlog only / New only (i.e. not in any of your lists)
+    - Page size should be divisible by 3 (cards are in a 3-col grid) so partial rows don't appear at the bottom
+- double Bayesian rating?
     - series with many friends who watched should gain a boost over those that dont
     - secondary rating with anilist score (non friend)
 - authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
@@ -26,6 +21,7 @@
         - like if a user is very confirming with overall anilist opinion
         - if a user often goes against the grain and either rates things a lot higher or lower than most people
         - browsing their anime ratings for highest deviations with an individual viewer to flip through anime individually
-- auto-threshold: auto-exclude friends from recommendations when their rating count falls below a configurable minimum (e.g. "ignore friends with fewer than 10 ratings")
-    - may become redundant if the rating count range filter on the friends page covers the use case adequately
-- the display/order between /anime and "Top Anime Recommendations" in dashboard is not the same. that makese no sense as its supposed to be the same data?
+- auto-threshold: auto-exclude friends when their rating count falls below a configurable minimum
+    - the rating count range filter on the friends page likely covers this adequately
+- the display/order between /anime and "Top Anime Recommendations" in dashboard is not the same. that makes no sense as its supposed to be the same data?
+- add "unfollow" mutation support to friends page if authenticated
