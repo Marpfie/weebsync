@@ -8,6 +8,8 @@
         "anilistAvgTitle": "AniList community average score",
         "dismiss": "Dismiss {{title}}",
         "friendAvgTitle": "Average score from friends who rated this",
+        "friendStackLabel_one": "Rated by 1 friend",
+        "friendStackLabel_other": "Rated by {{count}} friends",
         "friends_one": "1 friend",
         "friends_other": "{{count}} friends",
         "noRatingOutOf10": "—",
@@ -19,6 +21,17 @@
         "weightedTitleFriendFavourites": "Ranking score: friend ratings blended with AniList score",
         "weightedTitleFriendsOnly": "Ranking score: pure friend average",
         "weightedTitleMostAgreed": "Ranking score: friend consensus (count × avg)"
+    },
+    "format": {
+        "MANGA": "Manga",
+        "MOVIE": "Movie",
+        "NOVEL": "Light Novel",
+        "ONA": "ONA",
+        "ONE_SHOT": "One Shot",
+        "OVA": "OVA",
+        "SPECIAL": "Special",
+        "TV": "TV",
+        "TV_SHORT": "TV Short"
     },
     "dashboard": {
         "backlogPicks": "Your Backlog Picks",

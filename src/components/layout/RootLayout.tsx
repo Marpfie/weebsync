@@ -3,6 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import type { FC } from 'react'
 
 import { useAuth } from '../../hooks/useAuth'
+import { ErrorBoundary } from '../ErrorBoundary'
 import { AppHeader } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
 
@@ -23,7 +24,9 @@ export const RootLayout: FC = () => {
             <div className={'flex flex-1'}>
                 {token && !isAuthPage && <AppSidebar />}
                 <main className="flex-1 min-w-0" id="main-content">
-                    <Outlet />
+                    <ErrorBoundary>
+                        <Outlet />
+                    </ErrorBoundary>
                 </main>
             </div>
             {import.meta.env.DEV && <TanStackRouterDevtools />}

@@ -5,8 +5,6 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 
-import { setPreference } from '../../store/preferences'
-
 interface SyncStatusProps {
     className?: string
     isLoading: boolean
@@ -25,7 +23,6 @@ export const SyncStatus: FC<SyncStatusProps> = ({
     progress,
 }) => {
     const { t } = useTranslation()
-
     const [now, setNow] = useState(Date.now)
 
     useEffect(() => {
@@ -36,11 +33,6 @@ export const SyncStatus: FC<SyncStatusProps> = ({
             clearInterval(id)
         }
     }, [])
-
-    const handleResync = () => {
-        setPreference('lastSyncedAt', Date.now())
-        onResync()
-    }
 
     const lastSyncLabel = lastSyncedAt
         ? new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
@@ -60,7 +52,7 @@ export const SyncStatus: FC<SyncStatusProps> = ({
                 aria-label={t('sync.resyncAriaLabel')}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 bg-secondary text-foreground"
                 disabled={isLoading}
-                onClick={handleResync}
+                onClick={onResync}
                 type="button"
             >
                 <RefreshCw aria-hidden="true" className={cn(isLoading && 'animate-spin')} size={12} />
