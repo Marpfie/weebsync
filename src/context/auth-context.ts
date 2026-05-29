@@ -1,8 +1,10 @@
 import { createContext } from 'react'
 
 export interface AuthContextValue {
+    consumeCallbackToken: () => null | string
     login: () => void
     logout: () => void
+    setToken: (token: string) => void
     setUser: (user: ViewerUser) => void
     token: null | string
     user: null | ViewerUser
@@ -16,5 +18,3 @@ export interface ViewerUser {
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
-
-export const SetTokenContext = createContext<((token: string) => void) | null>(null)
