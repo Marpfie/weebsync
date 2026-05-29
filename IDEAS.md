@@ -3,29 +3,32 @@
 - Search bar in anime/manga pages
 - Limit default amount of media listed
     - "show more" button incrementally
-- Add "back to top" button
+- Add "back to top" button for the infinitely growing list pages
 - better filtering for status lists
-- filter settings for types of anime/manga
+    - filter settings for types of anime/manga
+    - movie/anime/ova etc.
+    - manga/doujin?/korean/chinese etc.
 - double baylesian rating?
     - series with many friends who watched should gain a boost over those that dont
     - secondary rating with anilist score (non friend)
 - authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
 - better status indication
     - visible animated progress bar of the loading queries
-    - visible pause state for the progress bar when the rate limit is reached
-    - make use of "Sonner" for notifying about errors, status changes and finished syncing
-- to combat the rough API limits, maybe the ANIME queries are prioritized, and manga comes last.
-    - users own list ALWAYS has priority and needs to be completed over any other query
-    - add a setting on what to prio so the user can get quicker feedback on what matters to them
-    - navigating between the different tabs should not requery anime/manga lists from Anilist
+    - visible pause state for the progress bar when the rate limit is reached (backend state exposed via `getRateLimitState`/`subscribeRateLimit` but no UI yet)
+    - make use of "Sonner" for notifying about errors, status changes and finished syncing (Phase 2)
 - language options
     - new languages with i18n
-- "Last synced: 47,023 minutes ago" should switch to hours/days after X hours and days
-    - this message is also incorrect if a normal sync happened
-        - the status should also work on initial data load, not just for requeries
-        - "Last synced: Never" despite snycing initially
-    - visiting the page should NOT resync data automatically. even when switching users, as long as the data for the entered/logged in user already exists
-        - !!! Users own list needs to be cached as well r ather than always requested. if the request fails the UI shows wrong data. (not on your list)
-
+- new rating mode based on "favorites"
+    - ranking based on anime favorites
+    - less useful but could be interesting: ranking based on favorite characters -> related shows
+        - similarly other favorite types like staff or studio
 - rate how much you agree with your friends
     - a separate page that gives you an overview of your overlap with other people. this could be used as an indication for who to include in friend ratings. or possibly even for weights later
+    - a view for highest disagreements individually and for the lists overall, not for anything serious but as a little tool for friendly headbutting
+- "biggest hipsters and haters" for lack of better word page
+    - user can look into some fun and possibly useful stats for their friends
+        - like if a user is very confirming with overall anilist opinion
+        - if a user often goes against the grain and either rates things a lot higher or lower than most people
+        - browsing their anime ratings for highest deviations with an individual viewer to flip through anime individually
+- auto-threshold: auto-exclude friends from recommendations when their rating count falls below a configurable minimum (e.g. "ignore friends with fewer than 10 ratings")
+    - may become redundant if the rating count range filter on the friends page covers the use case adequately
