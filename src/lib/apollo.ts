@@ -91,9 +91,7 @@ const errorLink = new ErrorLink(({ error, operation }) => {
             return
         }
         if (error.statusCode === 429) {
-            toastOnce('rate-limit', () =>
-                toast.error('AniList rate limit hit — please wait a moment before retrying.')
-            )
+            toastOnce('rate-limit', () => toast.error('AniList rate limit hit — please wait a moment before retrying.'))
             return
         }
         // Per-friend 5xx is handled with stale-data preservation; skip here.

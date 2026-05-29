@@ -80,9 +80,9 @@ export const AppHeader: FC = () => {
         rateLimit.paused && rateLimit.resumesAt ? Math.max(0, Math.ceil((rateLimit.resumesAt - now) / 1000)) : 0
 
     // x/30 badge: dev only, only while a sync is in flight, never while paused.
-    const isDev = import.meta.env.DEV
+    const isDevelopment = import.meta.env.DEV
     const showQuota =
-        isDev &&
+        isDevelopment &&
         !rateLimit.paused &&
         syncBusy &&
         rateLimit.observedLimit !== null &&

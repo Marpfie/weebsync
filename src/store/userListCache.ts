@@ -12,8 +12,7 @@ interface UserListCachePayload {
     entries: UserMediaEntry[]
 }
 
-const cacheKey = (userId: number, type: MediaType): string =>
-    `${STORAGE_KEYS.USER_LIST_CACHE_PREFIX}${userId}_${type}`
+const cacheKey = (userId: number, type: MediaType): string => `${STORAGE_KEYS.USER_LIST_CACHE_PREFIX}${userId}_${type}`
 
 export const loadUserListCache = (userId: number, type: MediaType): undefined | UserListCachePayload => {
     try {

@@ -181,10 +181,9 @@ const readRateLimitHeaders = (headers: Headers): void => {
             // fresh window started) or this is the very first request of a window
             // (remaining === limit - 1). AniList only sends X-RateLimit-Reset on
             // 429 responses, so we derive an estimated reset from window-start time.
-            const prev = state.observedRemaining
+            const previous = state.observedRemaining
             const isNewWindow =
-                (prev !== null && parsed > prev) ||
-                (state.observedLimit !== null && parsed === state.observedLimit - 1)
+                (previous !== null && parsed > previous) || (state.observedLimit !== null && parsed === state.observedLimit - 1)
             if (isNewWindow && !resetRaw) {
                 state.observedResetAt = Date.now() + WINDOW_MS
                 changed = true
@@ -242,17 +241,15 @@ const installFetchInterceptor = (() => {
                     const limit = response.headers.get('x-ratelimit-limit')
                     const remaining = response.headers.get('x-ratelimit-remaining')
                     const reset = response.headers.get('x-ratelimit-reset')
-                    const resetIn = reset
-                        ? Math.max(0, Math.ceil((Number(reset) * 1000 - Date.now()) / 1000))
-                        : null
+                    const resetIn = reset ? Math.max(0, Math.ceil((Number(reset) * 1000 - Date.now()) / 1000)) : null
                     if (response.status === 429) {
                         console.warn(
-                            `[rate-limiter ${ts()}] 429 — limit=${limit} remaining=${remaining} reset=${resetIn}s — pausing ${FULL_WINDOW_MS}ms`,
+                            `[rate-limiter ${ts()}] 429 — limit=${limit} remaining=${remaining} reset=${resetIn}s — pausing ${FULL_WINDOW_MS}ms`
                         )
                         pauseUntil(Date.now() + FULL_WINDOW_MS)
                     } else {
                         console.debug(
-                            `[rate-limiter ${ts()}] ${response.status} — limit=${limit} remaining=${remaining} reset=${resetIn}s`,
+                            `[rate-limiter ${ts()}] ${response.status} — limit=${limit} remaining=${remaining} reset=${resetIn}s`
                         )
                         // When the last slot is consumed (remaining === 0) and there is
                         // still work queued, explicitly pause so the UI shows a countdown.
@@ -261,7 +258,7 @@ const installFetchInterceptor = (() => {
                         if (remaining === '0' && !state.paused) {
                             const until = state.observedResetAt ?? Date.now() + WINDOW_MS
                             console.info(
-                                `[rate-limiter ${ts()}] quota exhausted — pausing until window reset (~${Math.ceil((until - Date.now()) / 1000)}s)`,
+                                `[rate-limiter ${ts()}] quota exhausted — pausing until window reset (~${Math.ceil((until - Date.now()) / 1000)}s)`
                             )
                             pauseUntil(until)
                         }
