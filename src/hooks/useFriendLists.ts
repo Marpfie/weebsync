@@ -36,9 +36,11 @@ const extractFriendEntries = (
             out.push({
                 averageScore: media.averageScore ?? null,
                 chapters: media.chapters ?? null,
+                countryOfOrigin: media.countryOfOrigin ?? null,
                 episodes: media.episodes ?? null,
                 friendId,
                 genres: media.genres ?? null,
+                isAdult: media.isAdult ?? null,
                 mediaCover: media.coverImage?.medium ?? null,
                 mediaFormat: media.format ?? null,
                 mediaId: media.id,

@@ -148,7 +148,6 @@ export const useRecommendationSync = (): void => {
 
     const isLoadingBase = userListsLoading || followingResult.loading
     const isLoadingFriends = animeFriendLists.loading || mangaFriendLists.loading
-
     // Single source of truth for "a network sync just finished":
     // any true→false transition of `isLoadingFriends`. Fires on manual
     // resync, on toggling syncAnime/syncManga (which kicks off a fetch for
@@ -176,8 +175,11 @@ export const useRecommendationSync = (): void => {
         () =>
             prefs.syncAnime
                 ? buildRecommendations({
+                      additionalStatuses: prefs.additionalAnimeStatuses,
                       dismissedIds: prefs.dismissedAnimeIds,
-                      excludedFriendIds: prefs.excludedFriendIds,
+                      excludedFriendIds: [
+                          ...new Set([...prefs.excludedFriendIds, ...prefs.friendAnimeExclusions]),
+                      ],
                       friendInfoById,
                       friendRatings: animeFriendLists.data,
                       includeCurrentFriendEntries: prefs.includeCurrentlyWatching,
@@ -193,8 +195,11 @@ export const useRecommendationSync = (): void => {
         () =>
             prefs.syncManga
                 ? buildRecommendations({
+                      additionalStatuses: prefs.additionalMangaStatuses,
                       dismissedIds: prefs.dismissedMangaIds,
-                      excludedFriendIds: prefs.excludedFriendIds,
+                      excludedFriendIds: [
+                          ...new Set([...prefs.excludedFriendIds, ...prefs.friendMangaExclusions]),
+                      ],
                       friendInfoById,
                       friendRatings: mangaFriendLists.data,
                       includeCurrentFriendEntries: prefs.includeCurrentlyReading,
@@ -205,6 +210,38 @@ export const useRecommendationSync = (): void => {
                 : [],
         [mangaUserEntries, mangaFriendLists.data, friendInfoById, prefs]
     )
+
+    // Per-friend rating counts, used by the friends page to render
+    // "142 anime rated / 4 manga rated" badges without extra requests.
+    const friendRatingCounts = useMemo(() => {
+        const counts = new Map<number, { animeRated: number; animeWatched: number; mangaRated: number; mangaWatched: number }>()
+        const ensure = (id: number) => {
+            let row = counts.get(id)
+            if (!row) {
+                row = { animeRated: 0, animeWatched: 0, mangaRated: 0, mangaWatched: 0 }
+                counts.set(id, row)
+            }
+            return row
+        }
+        const seen = new Set<string>()
+        for (const entry of animeFriendLists.data) {
+            const key = `a-${entry.friendId}-${entry.mediaId}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            const row = ensure(entry.friendId)
+            row.animeWatched++
+            if (entry.score > 0) row.animeRated++
+        }
+        for (const entry of mangaFriendLists.data) {
+            const key = `m-${entry.friendId}-${entry.mediaId}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            const row = ensure(entry.friendId)
+            row.mangaWatched++
+            if (entry.score > 0) row.mangaRated++
+        }
+        return counts
+    }, [animeFriendLists.data, mangaFriendLists.data])
 
     const resync = useCallback(() => {
         if (userId) {
@@ -234,6 +271,7 @@ export const useRecommendationSync = (): void => {
                     anime: { current: animeFriendLists.progress, total: animeFriendLists.total },
                     manga: { current: mangaFriendLists.progress, total: mangaFriendLists.total },
                 },
+                friendRatingCounts,
                 isLoadingBase,
                 isLoadingFriends,
                 isSyncing,
@@ -255,6 +293,7 @@ export const useRecommendationSync = (): void => {
         animeFriendLists.total,
         mangaFriendLists.progress,
         mangaFriendLists.total,
+        friendRatingCounts,
         isLoadingBase,
         isLoadingFriends,
         isSyncing,
