@@ -51,6 +51,25 @@ const state = {
     resumesAt: null as null | number,
 }
 
+// Cached immutable snapshot — `useSyncExternalStore` compares with `Object.is`,
+// so handing out a new object on every read causes an infinite render loop.
+// Rebuilt only when the underlying values change.
+let cachedSnapshot: RateLimitState = {
+    intervalCap: INTERVAL_CAP,
+    paused: false,
+    queueSize: 0,
+    resumesAt: null,
+}
+
+const rebuildSnapshot = (): void => {
+    cachedSnapshot = {
+        intervalCap: INTERVAL_CAP,
+        paused: state.paused,
+        queueSize: state.queueSize,
+        resumesAt: state.resumesAt,
+    }
+}
+
 const notify = (): void => {
     for (const l of state.listeners) l()
 }
@@ -59,6 +78,7 @@ const refreshQueueSize = (): void => {
     const next = queue.size + queue.pending
     if (state.queueSize === next) return
     state.queueSize = next
+    rebuildSnapshot()
     notify()
 }
 
@@ -67,12 +87,7 @@ queue.on('next', refreshQueueSize)
 queue.on('active', refreshQueueSize)
 queue.on('idle', refreshQueueSize)
 
-export const getRateLimitState = (): RateLimitState => ({
-    intervalCap: INTERVAL_CAP,
-    paused: state.paused,
-    queueSize: state.queueSize,
-    resumesAt: state.resumesAt,
-})
+export const getRateLimitState = (): RateLimitState => cachedSnapshot
 
 export const subscribeRateLimit = (listener: () => void): (() => void) => {
     state.listeners.add(listener)
@@ -85,6 +100,7 @@ const setPausedState = (paused: boolean, resumesAt: null | number): void => {
     if (state.paused === paused && state.resumesAt === resumesAt) return
     state.paused = paused
     state.resumesAt = resumesAt
+    rebuildSnapshot()
     notify()
 }
 
