@@ -5,16 +5,15 @@
  */
 
 import type { MediaType, UserMediaEntry } from '../lib/recommendations'
-
-const CACHE_PREFIX = 'weebsync_ulcache_'
-export const USER_LIST_CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24h
+import { CACHE_TTL_MS, STORAGE_KEYS } from '../lib/storage-keys'
 
 interface UserListCachePayload {
     cachedAt: number
     entries: UserMediaEntry[]
 }
 
-const cacheKey = (userId: number, type: MediaType): string => `${CACHE_PREFIX}${userId}_${type}`
+const cacheKey = (userId: number, type: MediaType): string =>
+    `${STORAGE_KEYS.USER_LIST_CACHE_PREFIX}${userId}_${type}`
 
 export const loadUserListCache = (userId: number, type: MediaType): undefined | UserListCachePayload => {
     try {
@@ -44,4 +43,4 @@ export const clearUserListCache = (userId: number): void => {
     }
 }
 
-export const isUserListCacheFresh = (cachedAt: number): boolean => Date.now() - cachedAt < USER_LIST_CACHE_TTL_MS
+export const isUserListCacheFresh = (cachedAt: number): boolean => Date.now() - cachedAt < CACHE_TTL_MS

@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
 import type { MediaType, RecommendationMode } from '../lib/recommendations'
+import { STORAGE_KEYS } from '../lib/storage-keys'
 
 /**
  * Single localStorage-backed source of truth for user-tunable settings.
@@ -10,7 +11,7 @@ import type { MediaType, RecommendationMode } from '../lib/recommendations'
  * re-renders automatically when prefs change anywhere in the app.
  */
 
-const STORAGE_KEY = 'weebsync_prefs'
+const STORAGE_KEY = STORAGE_KEYS.PREFERENCES
 
 export interface Preferences {
     dismissedAnimeIds: number[]

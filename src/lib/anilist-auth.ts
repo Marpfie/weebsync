@@ -1,5 +1,7 @@
+import { STORAGE_KEYS } from './storage-keys'
+
 const ANILIST_AUTH_URL = 'https://anilist.co/api/v2/oauth/authorize'
-const TOKEN_KEY = 'weebsync_token'
+const TOKEN_KEY = STORAGE_KEYS.TOKEN
 
 export const buildAuthUrl = (clientId: string): string => {
     const parameters = new URLSearchParams({

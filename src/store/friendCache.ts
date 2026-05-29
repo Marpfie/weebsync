@@ -7,9 +7,7 @@
  */
 
 import type { FriendRating, MediaType } from '../lib/recommendations'
-
-const CACHE_PREFIX = 'weebsync_fcache_'
-export const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24h
+import { CACHE_TTL_MS, STORAGE_KEYS } from '../lib/storage-keys'
 
 /** What we store per (user, mediaType). Mirrors `FriendRating` plus the original mediaType. */
 export interface FriendCacheEntry extends FriendRating {
@@ -21,7 +19,7 @@ interface CachePayload {
     entries: FriendCacheEntry[]
 }
 
-const cacheKey = (userId: number, type: MediaType): string => `${CACHE_PREFIX}${userId}_${type}`
+const cacheKey = (userId: number, type: MediaType): string => `${STORAGE_KEYS.FRIEND_CACHE_PREFIX}${userId}_${type}`
 
 export const loadCache = (userId: number, type: MediaType): CachePayload | undefined => {
     try {
