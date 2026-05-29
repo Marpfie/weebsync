@@ -15,9 +15,8 @@ import PQueue from 'p-queue'
  *      at `X-RateLimit-Reset` (+ a small clock-skew buffer).
  *   3. 429 retry with backoff as a last-resort fallback if 1 and 2 both miss.
  *
- * NOTE: p-queue v8 makes `intervalCap` private, so it can't be mutated at
- * runtime. If AniList ever exposes a much higher limit and we care to use it,
- * this needs to be refactored to a custom gate (or a queue restart).
+ * NOTE: `intervalCap` is private, so it can't be mutated at
+ * runtime.
  */
 
 const INTERVAL_CAP = 29
@@ -124,7 +123,7 @@ const installFetchInterceptor = (() => {
             if (typeof first === 'string') url = first
             else if (first instanceof URL) url = first.href
             else if (first instanceof Request) url = first.url
-            if (url.includes('/anilist')) readRateLimitHeaders(response.headers)
+            if (url.includes('graphql.anilist.co')) readRateLimitHeaders(response.headers)
             return response
         }
     }

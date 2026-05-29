@@ -18,16 +18,4 @@ export default defineConfig({
             '@': path.resolve(import.meta.dirname, './src'),
         },
     },
-    server: {
-        proxy: {
-            // Proxy AniList requests through Vite so the browser sees them as
-            // same-origin. Without this, a 429 from AniList is CORS-blocked
-            // so we can't read the status code and our retry logic never fires.
-            '/anilist': {
-                target: 'https://graphql.anilist.co',
-                changeOrigin: true,
-                rewrite: () => '/',
-            },
-        },
-    },
 })

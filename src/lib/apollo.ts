@@ -56,15 +56,11 @@ const authLink = new ApolloLink((operation, forward) => {
     return forward(operation)
 })
 
-// Always route through a same-origin proxy path (/anilist) so the browser can
-// read 429 responses — AniList omits CORS headers on errors, making them
-// opaque if fetched cross-origin. In dev Vite proxies this; in production nginx does.
-const httpLink = new HttpLink({ uri: '/anilist' })
-
-// Bumped to v2 when migrating from sessionStorage to localStorage and adding
-// typePolicies — a stale v1 snapshot in a different shape would otherwise
-// crash on first load.
-const CACHE_KEY = 'apollo-cache-persist-v2'
+// Direct request to AniList. Going through a proxy (dev or prod) would route
+// every user's traffic through a single IP, sharing one rate-limit bucket
+// across the whole user base. Cross-origin is fine: AniList's CORS allows it.
+const httpLink = new HttpLink({ uri: 'https://graphql.anilist.co' })
+const CACHE_KEY = 'apollo-cache-persist'
 
 /**
  * localStorage-backed storage for apollo3-cache-persist.
