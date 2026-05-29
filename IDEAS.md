@@ -2,6 +2,7 @@
 - mass toggle friends, to allow user to easily include only specific ones
 - Search bar in anime/manga pages
 - Limit default amount of media listed
+    - "show more" button incrementally
 - Add "back to top" button
 - better filtering for status lists
 - filter settings for types of anime/manga
@@ -12,3 +13,7 @@
     - show avatar preview when username is typed (debounced lookup)
     - OAuth login becomes optional ("login for convenience") rather than required
     - authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
+- better status indication
+    - visible animated progress bar of the loading queries
+    - the status should also work on initial data load, not just for requeries
+        - "Last synced: Never" despite snycing initially
