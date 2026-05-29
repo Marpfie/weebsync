@@ -3,17 +3,21 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Checkbox } from '../components/ui/checkbox'
+import { Label } from '../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Switch } from '../components/ui/switch'
 import { useAuth } from '../hooks/useAuth'
 import { requireIdentity } from '../lib/route-guards'
 import { clearIdentity, useIdentity } from '../store/identity'
 import type { Preferences } from '../store/preferences'
-import { setPreference, usePreferences } from '../store/preferences'
+import { mutate as mutatePrefs, setPreference, usePreferences } from '../store/preferences'
 
 const updatePreference = <K extends keyof Preferences>(key: K, value: Preferences[K]): void => {
     setPreference(key, value)
 }
+
+const ADDITIONAL_STATUSES = ['PAUSED', 'DROPPED', 'REPEATING'] as const
 
 interface SettingRowProps {
     children: React.ReactNode
@@ -124,6 +128,50 @@ const SettingsPage = () => {
                             }}
                         />
                     </SettingRow>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t('settings.additionalStatuses.title')}</CardTitle>
+                    <CardDescription>{t('settings.additionalStatuses.desc')}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {(['anime', 'manga'] as const).map((scope) => {
+                        const prefKey = scope === 'anime' ? 'additionalAnimeStatuses' : 'additionalMangaStatuses'
+                        const current = prefs[prefKey]
+                        const currentSet = new Set(current)
+                        return (
+                            <div className="space-y-2" key={scope}>
+                                <p className="text-sm font-medium">{t(`settings.additionalStatuses.${scope}`)}</p>
+                                <div className="flex flex-wrap gap-3">
+                                    {ADDITIONAL_STATUSES.map((status) => {
+                                        const id = `${scope}-${status}`
+                                        return (
+                                            <Label className="cursor-pointer" htmlFor={id} key={status}>
+                                                <Checkbox
+                                                    checked={currentSet.has(status)}
+                                                    id={id}
+                                                    onCheckedChange={(checked) => {
+                                                        mutatePrefs((draft) => {
+                                                            const list = draft[prefKey]
+                                                            draft[prefKey] = checked
+                                                                ? [...list, status]
+                                                                : list.filter((s) => s !== status)
+                                                            return draft
+                                                        })
+                                                    }}
+                                                />
+                                                <span className="text-muted-foreground font-normal">
+                                                    {t(`settings.additionalStatuses.${status}`)}
+                                                </span>
+                                            </Label>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )
+                    })}
                 </CardContent>
             </Card>
 
