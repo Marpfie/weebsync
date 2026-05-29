@@ -35,10 +35,19 @@ export const PRIORITY = {
 
 export type Priority = (typeof PRIORITY)[keyof typeof PRIORITY]
 
-/** Pause state exposed for UI (Phase 2 header badge). */
+export interface RateLimitState {
+    /** Static per-minute capacity. Useful for ETA calculations. */
+    intervalCap: number
+    paused: boolean
+    /** Pending + running tasks. Drives ETA + progress UI. */
+    queueSize: number
+    resumesAt: null | number
+}
+
 const state = {
     listeners: new Set<() => void>(),
     paused: false,
+    queueSize: 0,
     resumesAt: null as null | number,
 }
 
@@ -46,8 +55,22 @@ const notify = (): void => {
     for (const l of state.listeners) l()
 }
 
-export const getRateLimitState = (): { paused: boolean; resumesAt: null | number } => ({
+const refreshQueueSize = (): void => {
+    const next = queue.size + queue.pending
+    if (state.queueSize === next) return
+    state.queueSize = next
+    notify()
+}
+
+queue.on('add', refreshQueueSize)
+queue.on('next', refreshQueueSize)
+queue.on('active', refreshQueueSize)
+queue.on('idle', refreshQueueSize)
+
+export const getRateLimitState = (): RateLimitState => ({
+    intervalCap: INTERVAL_CAP,
     paused: state.paused,
+    queueSize: state.queueSize,
     resumesAt: state.resumesAt,
 })
 

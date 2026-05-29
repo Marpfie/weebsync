@@ -11,6 +11,15 @@ import type { FriendInfo, Recommendation } from '../lib/recommendations'
 
 export interface RecommendationsState {
     anime: Recommendation[]
+    /**
+     * Friends whose latest fetch failed (e.g. AniList HTTP 500). Stored per
+     * media type so the UI can surface a retry affordance. Their previous
+     * cache entries (if any) are preserved and still flow into recommendations.
+     */
+    failedFriendIds: {
+        anime: number[]
+        manga: number[]
+    }
     following: FriendInfo[]
     friendProgress: {
         anime: { current: number; total: number }
@@ -28,11 +37,14 @@ export interface RecommendationsState {
      * when this is null.
      */
     resync: (() => void) | null
+    /** Surgical retry for friends in `failedFriendIds` only. */
+    retryFailed: (() => void) | null
     userId: null | number | undefined
 }
 
 const initialState: RecommendationsState = {
     anime: [],
+    failedFriendIds: { anime: [], manga: [] },
     following: [],
     friendProgress: {
         anime: { current: 0, total: 0 },
@@ -44,6 +56,7 @@ const initialState: RecommendationsState = {
     lastSyncedAt: null,
     manga: [],
     resync: null,
+    retryFailed: null,
     userId: null,
 }
 
