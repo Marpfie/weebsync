@@ -1,5 +1,5 @@
 import { useApolloClient } from '@apollo/client/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { UserMediaListsQuery } from '../gql/graphql'
 import { UserMediaListsDocument } from '../gql/graphql'
@@ -8,7 +8,7 @@ import { buildRecommendations, type FriendInfo, type UserMediaEntry } from '../l
 import { clearCache } from '../store/friendCache'
 import { useIdentity } from '../store/identity'
 import { recordSync, usePreferences } from '../store/preferences'
-import { mutateRecommendations, resetRecommendations } from '../store/recommendationsStore'
+import { resetRecommendations, useRecommendationsStore } from '../store/recommendationsStore'
 import { clearUserListCache, isUserListCacheFresh, loadUserListCache, saveUserListCache } from '../store/userListCache'
 import { useFollowing } from './useFollowing'
 import { useFriendLists } from './useFriendLists'
@@ -29,6 +29,21 @@ export const useRecommendationSync = (): void => {
     const [syncKey, setSyncKey] = useState(0)
 
     const userId = identity?.userId
+
+    // Apollo cache is shared across users (single persisted blob). Whenever the
+    // logged-in user actually changes, wipe normalized data so a previous
+    // account's entries don't bleed into the new one.
+    const lastSeenUserId = useRef<null | number | undefined>(userId)
+    useEffect(() => {
+        if (lastSeenUserId.current !== userId) {
+            if (lastSeenUserId.current != null) {
+                void client.clearStore()
+                resetRecommendations()
+            }
+            lastSeenUserId.current = userId
+        }
+    }, [userId, client])
+
     const followingResult = useFollowing(userId)
 
     // User's own lists (anime/manga) — drive via the persisted cache when
@@ -182,21 +197,24 @@ export const useRecommendationSync = (): void => {
 
     // Push the latest computed values into the global store.
     useEffect(() => {
-        mutateRecommendations(() => ({
-            anime,
-            following,
-            friendProgress: {
-                anime: { current: animeFriendLists.progress, total: animeFriendLists.total },
-                manga: { current: mangaFriendLists.progress, total: mangaFriendLists.total },
+        useRecommendationsStore.setState(
+            {
+                anime,
+                following,
+                friendProgress: {
+                    anime: { current: animeFriendLists.progress, total: animeFriendLists.total },
+                    manga: { current: mangaFriendLists.progress, total: mangaFriendLists.total },
+                },
+                isLoadingBase,
+                isLoadingFriends,
+                isSyncing: syncKey > 0,
+                lastSyncedAt: prefs.lastSyncedAt,
+                manga,
+                resync,
+                userId,
             },
-            isLoadingBase,
-            isLoadingFriends,
-            isSyncing: syncKey > 0,
-            lastSyncedAt: prefs.lastSyncedAt,
-            manga,
-            resync,
-            userId,
-        }))
+            true
+        )
     }, [
         anime,
         manga,

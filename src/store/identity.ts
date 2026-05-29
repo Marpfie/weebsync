@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
-import { clearCache } from './friendCache'
+import { sweepStaleCaches } from '../lib/cache-sweep'
+import { STORAGE_KEYS } from '../lib/storage-keys'
 
 /**
  * - `guest`: user typed an AniList username on the landing page. The app reads
@@ -11,7 +12,7 @@ import { clearCache } from './friendCache'
  * The identity persists in localStorage
  */
 
-const STORAGE_KEY = 'weebsync_identity'
+const STORAGE_KEY = STORAGE_KEYS.IDENTITY
 
 export interface Identity {
     avatarUrl: null | string
@@ -64,22 +65,21 @@ const set = (next: Identity | null): void => {
 export const getIdentity = (): Identity | null => snapshot
 
 export const setGuestIdentity = (user: Omit<Identity, 'mode'>): void => {
+    sweepStaleCaches()
     set({ ...user, mode: 'guest' })
 }
 
 export const setAuthedIdentity = (user: Omit<Identity, 'mode'>): void => {
+    sweepStaleCaches()
     set({ ...user, mode: 'authed' })
 }
 
 export const clearIdentity = (): void => {
-    // Friend-list cache is keyed by the previous user's id; drop it so a
-    // different account doesn't see stale entries (and to avoid localStorage bloat).
-    const previous = snapshot
-
-    if (previous) {
-        clearCache(previous.userId)
-    }
-
+    // Don't wipe friend-list cache here — it's keyed by public friend ids and
+    // is reusable across accounts. The TTL sweep handles natural eviction;
+    // cross-user contamination of the *Apollo* cache is handled by the
+    // userId-mismatch guard in useRecommendationSync.
+    sweepStaleCaches()
     set(null)
 }
 
