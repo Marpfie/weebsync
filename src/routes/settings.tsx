@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Switch } from '../components/ui/switch'
 import { useAuth } from '../hooks/useAuth'
@@ -94,6 +94,33 @@ const SettingsPage = () => {
                             checked={prefs.includeAdultContent}
                             onCheckedChange={(v) => {
                                 updatePreference('includeAdultContent', v)
+                            }}
+                        />
+                    </SettingRow>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t('settings.sync.section')}</CardTitle>
+                    <CardDescription>{t('settings.sync.sectionDesc')}</CardDescription>
+                </CardHeader>
+                <CardContent className="divide-y divide-border">
+                    <SettingRow description={t('settings.sync.syncAnimeDesc')} title={t('settings.sync.syncAnime')}>
+                        <Switch
+                            aria-label={t('settings.sync.syncAnime')}
+                            checked={prefs.syncAnime}
+                            onCheckedChange={(v) => {
+                                updatePreference('syncAnime', v)
+                            }}
+                        />
+                    </SettingRow>
+                    <SettingRow description={t('settings.sync.syncMangaDesc')} title={t('settings.sync.syncManga')}>
+                        <Switch
+                            aria-label={t('settings.sync.syncManga')}
+                            checked={prefs.syncManga}
+                            onCheckedChange={(v) => {
+                                updatePreference('syncManga', v)
                             }}
                         />
                     </SettingRow>

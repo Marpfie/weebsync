@@ -26,6 +26,11 @@
         "backlogPicks": "Your Backlog Picks",
         "noAnime": "No anime recommendations yet. Add friends on AniList and resync.",
         "noManga": "No manga recommendations yet. Add friends on AniList and resync.",
+        "partialSyncBody_anime": "Anime sync is currently off, so no anime recommendations are being generated. Enable it in Settings if you want them.",
+        "partialSyncBody_manga": "Manga sync is currently off, so no manga recommendations are being generated. Enable it in Settings if you want them.",
+        "partialSyncEnable_anime": "Enable anime sync",
+        "partialSyncEnable_manga": "Enable manga sync",
+        "partialSyncTitle": "Some recommendations are turned off",
         "seeAll": "See all →",
         "subtitle_one": "{{count}} friend contributing to your recommendations",
         "subtitle_other": "{{count}} friends contributing to your recommendations",
@@ -46,10 +51,10 @@
     },
     "friends": {
         "avatarAlt": "{{name}}'s avatar",
-        "excludeAriaLabel": "Exclude {{name}}",
         "emptyDescription": "Follow some users on AniList and resync. They'll appear here so you can include or exclude their ratings.",
         "emptyTitle": "No friends yet",
         "errorTitle": "Couldn't load your following list",
+        "excludeAriaLabel": "Exclude {{name}}",
         "excluded": "Excluded",
         "includeAriaLabel": "Include {{name}}",
         "included": "Included",
@@ -69,6 +74,7 @@
         "modeAuthed": "Signed in with AniList",
         "modeGuest": "Browsing as guest",
         "switchUser": "Switch user",
+        "syncAriaLabel": "Resync data from AniList",
         "userMenuAriaLabel": "Open user menu"
     },
     "login": {
@@ -116,9 +122,15 @@
     },
     "recs": {
         "backlogOnly": "Backlog only",
+        "disabledAlertBody_anime": "You've disabled anime sync. Turn it back on to see anime recommendations from your friends.",
+        "disabledAlertBody_manga": "You've disabled manga sync. Turn it back on to see manga recommendations from your friends.",
+        "disabledAlertTitle_anime": "Anime sync is off",
+        "disabledAlertTitle_manga": "Manga sync is off",
         "empty": "No recommendations yet",
         "emptyDetail": "Make sure you have friends on AniList and they have rated some anime.",
         "emptyDetail_manga": "Make sure you have friends on AniList and they have rated some manga.",
+        "enableSync_anime": "Enable anime sync",
+        "enableSync_manga": "Enable manga sync",
         "fromBacklog": "From your backlog",
         "newDiscoveries": "New discoveries",
         "title_anime": "Anime Recommendations",
@@ -146,6 +158,14 @@
         "recModeDesc": "How to rank friend recommendations",
         "recSection": "Recommendations",
         "switchUser": "Switch user",
+        "sync": {
+            "section": "Sync",
+            "sectionDesc": "Using both enabled formats doubles API usage.",
+            "syncAnime": "Sync anime",
+            "syncAnimeDesc": "Fetch friends' anime lists and generate anime recommendations.",
+            "syncManga": "Sync manga",
+            "syncMangaDesc": "Fetch friends' manga lists and generate manga recommendations."
+        },
         "title": "Settings"
     },
     "sort": {
@@ -156,6 +176,13 @@
     "sync": {
         "completeToast": "Friends resynced",
         "lastSynced": "Last synced: {{time}}",
+        "lastSyncedAgo_day_one": "Last synced {{value}} day ago",
+        "lastSyncedAgo_day_other": "Last synced {{value}} days ago",
+        "lastSyncedAgo_hour_one": "Last synced {{value}} hour ago",
+        "lastSyncedAgo_hour_other": "Last synced {{value}} hours ago",
+        "lastSyncedAgo_minute_one": "Last synced {{value}} minute ago",
+        "lastSyncedAgo_minute_other": "Last synced {{value}} minutes ago",
+        "lastSyncedNever": "Not synced yet",
         "never": "Never",
         "resync": "Resync",
         "resyncAriaLabel": "Resync data from AniList",

@@ -1,22 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { MediaRecsPage } from '../components/recommendations/MediaRecsPage'
-import { useRecommendations } from '../hooks/useRecommendations'
 import { requireIdentity } from '../lib/route-guards'
+import { useRecommendationsStore } from '../store/recommendationsStore'
 
 const MangaPage = () => {
-    const recs = useRecommendations()
-    return (
-        <MediaRecsPage
-            friendProgress={recs.friendProgress.manga}
-            isLoading={recs.isLoadingBase || recs.isLoadingFriends}
-            isSyncing={recs.isSyncing}
-            lastSyncedAt={recs.lastSyncedAt}
-            mediaType="MANGA"
-            onResync={recs.resync}
-            recs={recs.manga}
-        />
-    )
+    const { isLoadingBase, isLoadingFriends, manga } = useRecommendationsStore()
+    return <MediaRecsPage isLoading={isLoadingBase || isLoadingFriends} mediaType="MANGA" recs={manga} />
 }
 
 export const Route = createFileRoute('/manga')({ beforeLoad: requireIdentity, component: MangaPage })

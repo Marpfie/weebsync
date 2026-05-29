@@ -3,55 +3,59 @@ import { useTranslation } from 'react-i18next'
 
 import { useRecommendationView } from '../../hooks/useRecommendationView'
 import type { MediaType, Recommendation } from '../../lib/recommendations'
-import { usePreferences } from '../../store/preferences'
+import { setPreference, usePreferences } from '../../store/preferences'
 import { FilterBar } from '../recommendations/FilterBar'
-import { SyncStatus } from '../sync/SyncStatus'
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '../ui/alert'
+import { Button } from '../ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../ui/empty'
 import { RecommendationsGrid } from './RecommendationsGrid'
 
 interface MediaRecsPageProps {
-    friendProgress?: { current: number; total: number }
     isLoading: boolean
-    isSyncing?: boolean
-    lastSyncedAt: null | number
     mediaType: MediaType
-    onResync: () => void
     recs: readonly Recommendation[]
 }
 
 /**
- * Shared anime/manga page shell. Owns the SyncStatus + FilterBar layout and
- * delegates filter/dismiss state to `useRecommendationView` and rendering to
- * `RecommendationsGrid`. Anime and Manga routes are now one-liners around this.
+ * Shared anime/manga page shell.
+ * Shows an inline Alert when the user has the corresponding format toggled off.
  */
-export const MediaRecsPage: FC<MediaRecsPageProps> = ({
-    friendProgress,
-    isLoading,
-    isSyncing = false,
-    lastSyncedAt,
-    mediaType,
-    onResync,
-    recs,
-}) => {
+export const MediaRecsPage: FC<MediaRecsPageProps> = ({ isLoading, mediaType, recs }) => {
     const { t } = useTranslation()
-    const { recommendationMode } = usePreferences()
+    const prefs = usePreferences()
     const view = useRecommendationView(recs, mediaType)
     const context = { context: mediaType.toLowerCase() }
+
+    const syncEnabled = mediaType === 'ANIME' ? prefs.syncAnime : prefs.syncManga
+    const enableKey = mediaType === 'ANIME' ? 'syncAnime' : 'syncManga'
+
+    if (!syncEnabled) {
+        return (
+            <div className="p-6 max-w-5xl mx-auto space-y-8">
+                <h1 className="text-2xl font-bold">{t(`recs.title_${mediaType.toLowerCase()}`)}</h1>
+                <Alert>
+                    <AlertTitle>{t(`recs.disabledAlertTitle`, context)}</AlertTitle>
+                    <AlertDescription>{t(`recs.disabledAlertBody`, context)}</AlertDescription>
+                    <AlertAction>
+                        <Button
+                            onClick={() => {
+                                setPreference(enableKey, true)
+                            }}
+                            size="sm"
+                        >
+                            {t('recs.enableSync', context)}
+                        </Button>
+                    </AlertAction>
+                </Alert>
+            </div>
+        )
+    }
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-8">
             <div className="flex items-start justify-between flex-wrap gap-3">
                 <h1 className="text-2xl font-bold">{t(`recs.title_${mediaType.toLowerCase()}`)}</h1>
-                <div className="flex items-center gap-3 flex-wrap">
-                    <SyncStatus
-                        isLoading={isLoading}
-                        isSyncing={isSyncing}
-                        lastSyncedAt={lastSyncedAt}
-                        onResync={onResync}
-                        progress={friendProgress}
-                    />
-                    <FilterBar onBacklogToggle={view.setBacklogOnly} showBacklogOnly={view.backlogOnly} />
-                </div>
+                <FilterBar onBacklogToggle={view.setBacklogOnly} showBacklogOnly={view.backlogOnly} />
             </div>
 
             {isLoading ? (
@@ -76,7 +80,7 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({
                             </h2>
                             <RecommendationsGrid
                                 mediaType={mediaType}
-                                mode={recommendationMode}
+                                mode={prefs.recommendationMode}
                                 onDismiss={view.onDismiss}
                                 recs={view.backlog}
                             />
@@ -90,7 +94,7 @@ export const MediaRecsPage: FC<MediaRecsPageProps> = ({
                             </h2>
                             <RecommendationsGrid
                                 mediaType={mediaType}
-                                mode={recommendationMode}
+                                mode={prefs.recommendationMode}
                                 onDismiss={view.onDismiss}
                                 recs={view.discovery}
                             />

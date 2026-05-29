@@ -4,6 +4,7 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import type { FC } from 'react'
 import { useEffect } from 'react'
 
+import { useRecommendationSync } from '../../hooks/useRecommendationSync'
 import { useIdentity } from '../../store/identity'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { Toaster } from '../ui/sonner'
@@ -20,6 +21,8 @@ export const RootLayout: FC = () => {
     const isLandingPage = pathname === '/'
     const showAppShell = identity != null && !isOAuthCallback && !isLandingPage
 
+    useRecommendationSync()
+
     // Whenever identity disappears, cancel any in-flight queries (so friend-list
     // fetches don't keep burning rate-limit calls) and bounce back to landing.
     useEffect(() => {
@@ -30,7 +33,7 @@ export const RootLayout: FC = () => {
     }, [identity, isOAuthCallback, client, navigate])
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="h-screen flex flex-col overflow-hidden">
             <a
                 className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-medium focus:bg-primary focus:text-primary-foreground"
                 href="#main-content"
@@ -38,9 +41,9 @@ export const RootLayout: FC = () => {
                 Skip to main content
             </a>
             {showAppShell && <AppHeader />}
-            <div className={'flex flex-1'}>
+            <div className={'flex flex-1 overflow-hidden'}>
                 {showAppShell && <AppSidebar />}
-                <main className="flex-1 min-w-0" id="main-content">
+                <main className="flex-1 min-w-0 overflow-y-auto" id="main-content">
                     <ErrorBoundary>
                         <Outlet />
                     </ErrorBoundary>
