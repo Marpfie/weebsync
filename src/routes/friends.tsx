@@ -1,5 +1,105 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 
-import { FriendsPage } from '../components/pages/FriendsPage'
+import { cn } from '@/lib/utils'
 
-export const Route = createFileRoute('/friends')({ component: FriendsPage })
+import { Switch } from '../components/ui/switch'
+import type { FollowingQuery } from '../gql/graphql'
+import { useFollowing } from '../hooks/useFollowing'
+import { useViewer } from '../hooks/useViewer'
+import { requireAuth } from '../lib/route-guards'
+import { toggleExcludedFriend, usePreferences } from '../store/preferences'
+
+type FollowingUser = NonNullable<NonNullable<NonNullable<FollowingQuery['Page']>['following']>[number]>
+
+const FriendsPage = () => {
+    const { t } = useTranslation()
+    const { excludedFriendIds } = usePreferences()
+    const viewerResult = useViewer()
+    const followingResult = useFollowing(viewerResult.data?.Viewer?.id)
+    const following = followingResult.data?.Page?.following ?? []
+
+    return (
+        <div className="p-6 max-w-3xl mx-auto space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold">{t('friends.title')}</h1>
+                <p className="text-sm mt-0.5 text-muted-foreground">
+                    {t('friends.subtitle', { count: following.length })}
+                </p>
+            </div>
+
+            {followingResult.loading && <p className="text-muted-foreground">{t('friends.loading')}</p>}
+
+            <ul aria-label={t('friends.listAriaLabel')} className="space-y-2">
+                {following.map((friend: FollowingUser | null) => {
+                    if (!friend) return null
+                    const isExcluded = excludedFriendIds.includes(friend.id)
+                    return (
+                        <li
+                            className={cn(
+                                'flex items-center gap-3 p-3 rounded-xl bg-card border border-border',
+                                isExcluded && 'opacity-50'
+                            )}
+                            key={friend.id}
+                        >
+                            {friend.avatar?.medium ? (
+                                <img
+                                    alt={t('friends.avatarAlt', { name: friend.name })}
+                                    className="rounded-full w-10 h-10 object-cover"
+                                    height={40}
+                                    src={friend.avatar.medium}
+                                    width={40}
+                                />
+                            ) : (
+                                <div
+                                    aria-hidden="true"
+                                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold bg-secondary text-primary"
+                                >
+                                    {friend.name[0].toUpperCase()}
+                                </div>
+                            )}
+
+                            <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm">{friend.name}</p>
+                                {friend.siteUrl && (
+                                    <a
+                                        className="text-xs text-muted-foreground/60"
+                                        href={friend.siteUrl}
+                                        rel="noopener noreferrer"
+                                        target="_blank"
+                                    >
+                                        {t('friends.viewOnAniList')}
+                                    </a>
+                                )}
+                            </div>
+
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                <span className="sr-only">
+                                    {isExcluded
+                                        ? t('friends.toggleSrExcluded', { name: friend.name })
+                                        : t('friends.toggleSrIncluded', { name: friend.name })}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    {isExcluded ? t('friends.excluded') : t('friends.included')}
+                                </span>
+                                <Switch
+                                    aria-label={
+                                        isExcluded
+                                            ? t('friends.includeAriaLabel', { name: friend.name })
+                                            : t('friends.excludeAriaLabel', { name: friend.name })
+                                    }
+                                    checked={!isExcluded}
+                                    onCheckedChange={() => {
+                                        toggleExcludedFriend(friend.id)
+                                    }}
+                                />
+                            </label>
+                        </li>
+                    )
+                })}
+            </ul>
+        </div>
+    )
+}
+
+export const Route = createFileRoute('/friends')({ beforeLoad: requireAuth, component: FriendsPage })

@@ -1,5 +1,22 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { MangaPage } from '../components/pages/MangaPage'
+import { MediaRecsPage } from '../components/recommendations/MediaRecsPage'
+import { useRecommendations } from '../hooks/useRecommendations'
+import { requireAuth } from '../lib/route-guards'
 
-export const Route = createFileRoute('/manga')({ component: MangaPage })
+const MangaPage = () => {
+    const recs = useRecommendations()
+    return (
+        <MediaRecsPage
+            friendProgress={recs.friendProgress.manga}
+            isLoading={recs.isLoadingBase || recs.isLoadingFriends}
+            isSyncing={recs.isSyncing}
+            lastSyncedAt={recs.lastSyncedAt}
+            mediaType="MANGA"
+            onResync={recs.resync}
+            recs={recs.manga}
+        />
+    )
+}
+
+export const Route = createFileRoute('/manga')({ beforeLoad: requireAuth, component: MangaPage })
