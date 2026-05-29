@@ -9,6 +9,13 @@ import type { FriendInfo, Recommendation } from '../lib/recommendations'
  * route can read from one place without re-running the orchestrator pipeline.
  */
 
+export interface FriendRatingCount {
+    animeRated: number
+    animeWatched: number
+    mangaRated: number
+    mangaWatched: number
+}
+
 export interface RecommendationsState {
     anime: Recommendation[]
     /**
@@ -25,6 +32,8 @@ export interface RecommendationsState {
         anime: { current: number; total: number }
         manga: { current: number; total: number }
     }
+    /** Per-friend totals derived from cached friend lists. Empty before first sync. */
+    friendRatingCounts: ReadonlyMap<number, FriendRatingCount>
     isLoadingBase: boolean
     isLoadingFriends: boolean
     /** True while a manual resync is in flight (not initial cache load). */
@@ -50,6 +59,7 @@ const initialState: RecommendationsState = {
         anime: { current: 0, total: 0 },
         manga: { current: 0, total: 0 },
     },
+    friendRatingCounts: new Map(),
     isLoadingBase: false,
     isLoadingFriends: false,
     isSyncing: false,

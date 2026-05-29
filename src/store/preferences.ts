@@ -13,10 +13,27 @@ import { STORAGE_KEYS } from '../lib/storage-keys'
 
 const STORAGE_KEY = STORAGE_KEYS.PREFERENCES
 
+/**
+ * When 18+ content is globally enabled, this finer-grained filter is applied
+ * on top: include everything, only show adult, or hide it entirely. Has no
+ * effect when `includeAdultContent` is false.
+ */
+export type AdultFilterMode = 'exclude' | 'include' | 'only'
+
 export interface Preferences {
+    additionalAnimeStatuses: string[]
+    additionalMangaStatuses: string[]
+    adultFilter: AdultFilterMode
     dismissedAnimeIds: number[]
     dismissedMangaIds: number[]
+    /** Format codes (or synthetic codes like MANHWA/DOUJIN) to keep. Empty = no filter. */
+    enabledAnimeFormats: string[]
+    enabledMangaFormats: string[]
     excludedFriendIds: number[]
+    /** Friend IDs whose entries are skipped only for anime recommendations. */
+    friendAnimeExclusions: number[]
+    /** Friend IDs whose entries are skipped only for manga recommendations. */
+    friendMangaExclusions: number[]
     includeAdultContent: boolean
     includeCurrentlyReading: boolean
     includeCurrentlyWatching: boolean
@@ -27,9 +44,16 @@ export interface Preferences {
 }
 
 const DEFAULTS: Readonly<Preferences> = Object.freeze({
+    additionalAnimeStatuses: [],
+    additionalMangaStatuses: [],
+    adultFilter: 'include',
     dismissedAnimeIds: [],
     dismissedMangaIds: [],
+    enabledAnimeFormats: [],
+    enabledMangaFormats: [],
     excludedFriendIds: [],
+    friendAnimeExclusions: [],
+    friendMangaExclusions: [],
     includeAdultContent: false,
     includeCurrentlyReading: false,
     includeCurrentlyWatching: false,
@@ -41,9 +65,15 @@ const DEFAULTS: Readonly<Preferences> = Object.freeze({
 
 const cloneDefaults = (): Preferences => ({
     ...DEFAULTS,
+    additionalAnimeStatuses: [],
+    additionalMangaStatuses: [],
     dismissedAnimeIds: [],
     dismissedMangaIds: [],
+    enabledAnimeFormats: [],
+    enabledMangaFormats: [],
     excludedFriendIds: [],
+    friendAnimeExclusions: [],
+    friendMangaExclusions: [],
 })
 
 const readFromStorage = (): Preferences => {
@@ -99,6 +129,38 @@ export const toggleExcludedFriend = (friendId: number): void => {
             index === -1
                 ? [...draft.excludedFriendIds, friendId]
                 : draft.excludedFriendIds.filter((id) => id !== friendId)
+        return draft
+    })
+}
+
+const toggleId = (list: number[], id: number): number[] =>
+    list.includes(id) ? list.filter((x) => x !== id) : [...list, id]
+
+/**
+ * Triple-exclusion logic for the friends page.
+ *  - `'full'` cascades: adds the friend to `excludedFriendIds` and to both
+ *    rec-exclusion lists. Removing full-exclude does NOT auto-restore the
+ *    rec toggles (matches the documented behaviour in the plan).
+ *  - `'anime'` / `'manga'` toggle only that specific rec list.
+ */
+export const toggleFriendExclusion = (friendId: number, scope: 'anime' | 'full' | 'manga'): void => {
+    mutate((draft) => {
+        if (scope === 'anime') {
+            draft.friendAnimeExclusions = toggleId(draft.friendAnimeExclusions, friendId)
+        } else if (scope === 'manga') {
+            draft.friendMangaExclusions = toggleId(draft.friendMangaExclusions, friendId)
+        } else {
+            const wasFull = draft.excludedFriendIds.includes(friendId)
+            draft.excludedFriendIds = toggleId(draft.excludedFriendIds, friendId)
+            if (!wasFull) {
+                if (!draft.friendAnimeExclusions.includes(friendId)) {
+                    draft.friendAnimeExclusions = [...draft.friendAnimeExclusions, friendId]
+                }
+                if (!draft.friendMangaExclusions.includes(friendId)) {
+                    draft.friendMangaExclusions = [...draft.friendMangaExclusions, friendId]
+                }
+            }
+        }
         return draft
     })
 }
