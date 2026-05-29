@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 
 import type { FriendMediaListsQuery, MediaType } from '../gql/graphql'
 import { FriendMediaListsDocument } from '../gql/graphql'
-import { enqueue } from '../lib/rate-limiter'
+import { enqueue, PRIORITY } from '../lib/rate-limiter'
 import { type FriendCacheEntry, isCacheFresh, loadCache, saveCache } from '../store/friendCache'
 
 interface FriendListsState {
@@ -13,6 +13,8 @@ interface FriendListsState {
     progress: number
     total: number
 }
+
+const priorityForType = (type: MediaType) => (type === 'ANIME' ? PRIORITY.FRIEND_ANIME : PRIORITY.FRIEND_MANGA)
 
 /**
  * Flattens a friend's `MediaListCollection` query result into our flat cache shape.
@@ -84,6 +86,7 @@ export const useFriendLists = (
         if (!userId || friendIds.length === 0) return
 
         const cached = loadCache(userId, type)
+
         if (syncKey === 0 && cached && isCacheFresh(cached.cachedAt)) {
             // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/set-state-in-effect
             setState({
@@ -106,12 +109,14 @@ export const useFriendLists = (
             for (const [index, friendId] of friendIds.entries()) {
                 if (cancelled) return
                 try {
-                    const result = await enqueue(() =>
-                        client.query<FriendMediaListsQuery>({
-                            fetchPolicy: syncKey > 0 ? 'network-only' : 'cache-first',
-                            query: FriendMediaListsDocument,
-                            variables: { type, userId: friendId },
-                        })
+                    const result = await enqueue(
+                        () =>
+                            client.query<FriendMediaListsQuery>({
+                                fetchPolicy: syncKey > 0 ? 'network-only' : 'cache-first',
+                                query: FriendMediaListsDocument,
+                                variables: { type, userId: friendId },
+                            }),
+                        priorityForType(type)
                     )
                     aggregated.push(...extractFriendEntries(result.data, friendId, type))
                 } catch {
