@@ -3,7 +3,45 @@ import { persistCache } from 'apollo3-cache-persist'
 
 import { getToken } from './anilist-auth'
 
-const cache = new InMemoryCache()
+/**
+ * Stable type policies. Without these, Apollo cannot reliably cache the
+ * `MediaListCollection` (no id in our query) or merge the paginated
+ * `Page.following` list — both of which would force network refetches that
+ * defeat the cache-first strategy in `defaultOptions` below.
+ */
+const cache = new InMemoryCache({
+    typePolicies: {
+        MediaList: {
+            keyFields: ['id'],
+        },
+        MediaListCollection: {
+            // No id in our query; embed inline under the parent query.
+            keyFields: false,
+        },
+        MediaListGroup: {
+            keyFields: false,
+        },
+        Page: {
+            fields: {
+                following: {
+                    keyArgs: ['userId', 'sort'],
+                    // Concatenate consecutive pages; resetting on page=1 keeps
+                    // a fresh first request from doubling up on the cached list.
+                    merge(existing: unknown[] = [], incoming: unknown[], options) {
+                        const arguments_ = options.args as null | undefined | { page?: number }
+                        const page = arguments_?.page ?? 1
+                        return page <= 1 ? incoming : [...existing, ...incoming]
+                    },
+                },
+            },
+            // Page is a query wrapper, never standalone — don't normalize.
+            keyFields: false,
+        },
+        User: {
+            keyFields: ['id'],
+        },
+    },
+})
 
 const authLink = new ApolloLink((operation, forward) => {
     const token = getToken()
@@ -23,35 +61,38 @@ const authLink = new ApolloLink((operation, forward) => {
 // opaque if fetched cross-origin. In dev Vite proxies this; in production nginx does.
 const httpLink = new HttpLink({ uri: '/anilist' })
 
-const CACHE_KEY = 'apollo-cache-persist'
+// Bumped to v2 when migrating from sessionStorage to localStorage and adding
+// typePolicies — a stale v1 snapshot in a different shape would otherwise
+// crash on first load.
+const CACHE_KEY = 'apollo-cache-persist-v2'
 
 /**
- * sessionStorage-backed storage for apollo3-cache-persist.
+ * localStorage-backed storage for apollo3-cache-persist.
  *
- * Handles QuotaExceededError by evicting the stale snapshot and retrying once
- * with the current data. If the fresh data is itself too large the write is
- * silently dropped.
+ * Survives tab reloads. Handles QuotaExceededError by
+ * evicting the stale snapshot and retrying once with the current data. If the
+ * fresh data is itself too large the write is silently dropped and the in-memory
+ * cache continues working without persistence.
  */
-const quotaSafeSessionStorage = {
-    getItem: (key: string) => globalThis.sessionStorage.getItem(key),
+const quotaSafeLocalStorage = {
+    getItem: (key: string) => globalThis.localStorage.getItem(key),
     removeItem: (key: string) => {
-        globalThis.sessionStorage.removeItem(key)
+        globalThis.localStorage.removeItem(key)
     },
     setItem: (key: string, value: string) => {
         try {
-            globalThis.sessionStorage.setItem(key, value)
+            globalThis.localStorage.setItem(key, value)
         } catch (error) {
             const isQuota =
                 error instanceof DOMException &&
                 (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
             if (!isQuota) throw error
 
-            // Evict the stale snapshot and retry with fresh data
-            globalThis.sessionStorage.removeItem(key)
+            globalThis.localStorage.removeItem(key)
             try {
-                globalThis.sessionStorage.setItem(key, value)
+                globalThis.localStorage.setItem(key, value)
             } catch {
-                // Still too large, in-memory cache continues working without persistence
+                // Still too large, drop the persisted snapshot silently.
             }
         }
     },
@@ -62,15 +103,21 @@ export async function initApollo() {
         cache,
         key: CACHE_KEY,
         maxSize: 4_194_304,
-        storage: quotaSafeSessionStorage,
+        storage: quotaSafeLocalStorage,
     })
 
     return new ApolloClient({
         cache,
         defaultOptions: {
+            query: {
+                fetchPolicy: 'cache-first',
+            },
             watchQuery: {
-                // Show cached data immediately, refresh in the background
-                fetchPolicy: 'cache-and-network',
+                // Cache-first kills the background refetch storm that previously
+                // fired on every route mount. Stale-while-revalidate semantics
+                // are handled explicitly by `useRecommendationSync`.
+                fetchPolicy: 'cache-first',
+                nextFetchPolicy: 'cache-first',
             },
         },
         link: ApolloLink.from([authLink, httpLink]),
