@@ -15,10 +15,10 @@ const Dashboard = () => {
     const prefs = usePreferences()
     const recs = useRecommendationsStore()
 
-    const animeBacklog = recs.anime.filter((r) => r.isInPlanList).slice(0, TOP_PER_SECTION)
-    const animeNew = recs.anime.filter((r) => !r.isInPlanList).slice(0, TOP_PER_SECTION)
-    const mangaBacklog = recs.manga.filter((r) => r.isInPlanList).slice(0, TOP_PER_SECTION)
-    const mangaNew = recs.manga.filter((r) => !r.isInPlanList).slice(0, TOP_PER_SECTION)
+    const animeBacklog = recs.anime.filter((r) => r.isInPlanList || r.isAlreadyStarted).slice(0, TOP_PER_SECTION)
+    const animeNew = recs.anime.filter((r) => !r.isInPlanList && !r.isAlreadyStarted).slice(0, TOP_PER_SECTION)
+    const mangaBacklog = recs.manga.filter((r) => r.isInPlanList || r.isAlreadyStarted).slice(0, TOP_PER_SECTION)
+    const mangaNew = recs.manga.filter((r) => !r.isInPlanList && !r.isAlreadyStarted).slice(0, TOP_PER_SECTION)
 
     const someDisabled = !prefs.syncAnime || !prefs.syncManga
     const disabledKey: 'syncAnime' | 'syncManga' = prefs.syncAnime ? 'syncManga' : 'syncAnime'

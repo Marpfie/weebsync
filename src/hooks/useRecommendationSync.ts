@@ -135,10 +135,7 @@ export const useRecommendationSync = (): void => {
 
     const friendInfoById = useMemo(() => new Map(following.map((f) => [f.id, f])), [following])
 
-    const eligibleFriendIds = useMemo(
-        () => following.filter((f) => !prefs.excludedFriendIds.includes(f.id)).map((f) => f.id),
-        [following, prefs.excludedFriendIds]
-    )
+    const eligibleFriendIds = useMemo(() => following.map((f) => f.id), [following])
 
     const animeFriendIds = prefs.syncAnime ? eligibleFriendIds : []
     const mangaFriendIds = prefs.syncManga ? eligibleFriendIds : []

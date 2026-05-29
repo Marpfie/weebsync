@@ -48,8 +48,9 @@ export const useRecommendationView = (
         const adultAllowed = prefs.includeAdultContent
         return recs.filter((r) => {
             if (dismissedSet.has(r.mediaId)) return false
-            if (statusFilter === 'backlog' && !r.isInPlanList) return false
-            if (statusFilter === 'new' && r.isInPlanList) return false
+            const isBacklog = r.isInPlanList || r.isAlreadyStarted
+            if (statusFilter === 'backlog' && !isBacklog) return false
+            if (statusFilter === 'new' && isBacklog) return false
             if (formatSet) {
                 const key = deriveFormatKey(r)
                 if (!key || !formatSet.has(key)) return false
