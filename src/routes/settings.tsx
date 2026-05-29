@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Switch } from '../components/ui/switch'
 import { useAuth } from '../hooks/useAuth'
-import { requireAuth } from '../lib/route-guards'
+import { requireIdentity } from '../lib/route-guards'
+import { clearIdentity, useIdentity } from '../store/identity'
 import type { Preferences } from '../store/preferences'
 import { setPreference, usePreferences } from '../store/preferences'
 
@@ -15,6 +16,14 @@ const updatePreference = <K extends keyof Preferences>(key: K, value: Preference
 const SettingsPage = () => {
     const { t } = useTranslation()
     const { logout } = useAuth()
+    const identity = useIdentity()
+    const handleSignOut = () => {
+        if (identity?.mode === 'authed') {
+            logout()
+        } else {
+            clearIdentity()
+        }
+    }
     const prefs = usePreferences()
 
     const row = 'flex items-center justify-between py-3'
@@ -141,10 +150,10 @@ const SettingsPage = () => {
                 <div className="rounded-xl p-4 bg-card border border-border">
                     <button
                         className="text-sm px-4 py-2 rounded-lg font-medium bg-destructive text-white"
-                        onClick={logout}
+                        onClick={handleSignOut}
                         type="button"
                     >
-                        {t('settings.logout')}
+                        {identity?.mode === 'guest' ? t('settings.switchUser') : t('settings.logout')}
                     </button>
                 </div>
             </section>
@@ -152,4 +161,4 @@ const SettingsPage = () => {
     )
 }
 
-export const Route = createFileRoute('/settings')({ beforeLoad: requireAuth, component: SettingsPage })
+export const Route = createFileRoute('/settings')({ beforeLoad: requireIdentity, component: SettingsPage })

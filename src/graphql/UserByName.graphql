@@ -1,0 +1,11 @@
+query UserByName($name: String!) {
+    User(search: $name) {
+        id
+        name
+        siteUrl
+        avatar {
+            medium
+            large
+        }
+    }
+}

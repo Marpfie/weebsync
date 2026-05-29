@@ -22,17 +22,6 @@
         "weightedTitleFriendsOnly": "Ranking score: pure friend average",
         "weightedTitleMostAgreed": "Ranking score: friend consensus (count × avg)"
     },
-    "format": {
-        "MANGA": "Manga",
-        "MOVIE": "Movie",
-        "NOVEL": "Light Novel",
-        "ONA": "ONA",
-        "ONE_SHOT": "One Shot",
-        "OVA": "OVA",
-        "SPECIAL": "Special",
-        "TV": "TV",
-        "TV_SHORT": "TV Short"
-    },
     "dashboard": {
         "backlogPicks": "Your Backlog Picks",
         "noAnime": "No anime recommendations yet. Add friends on AniList and resync.",
@@ -43,6 +32,17 @@
         "title": "Dashboard",
         "topAnime": "Top Anime Recommendations",
         "topManga": "Top Manga Recommendations"
+    },
+    "format": {
+        "MANGA": "Manga",
+        "MOVIE": "Movie",
+        "NOVEL": "Light Novel",
+        "ONA": "ONA",
+        "ONE_SHOT": "One Shot",
+        "OVA": "OVA",
+        "SPECIAL": "Special",
+        "TV": "TV",
+        "TV_SHORT": "TV Short"
     },
     "friends": {
         "avatarAlt": "{{name}}'s avatar",
@@ -61,17 +61,28 @@
     },
     "header": {
         "avatarAlt": "{{name}}'s avatar",
-        "logout": "Logout"
+        "guestBadge": "Guest",
+        "logout": "Sign out",
+        "switchUser": "Switch user"
     },
     "login": {
+        "continueAsGuest": "Continue",
+        "didYouMean": "Did you mean…?",
         "howItWorks": "How it works",
         "loginButton": "Log in with AniList",
-        "privacyNote": "weebsync only reads your AniList data. It never posts, modifies, or stores your data on any server. Everything stays in your browser.",
-        "step1": "Log in with your AniList account",
+        "loginInstead": "Log in with AniList instead",
+        "lookupError": "Something went wrong. Try again in a moment.",
+        "lookupLoading": "Looking up…",
+        "lookupNotFound": "No AniList user with that name.",
+        "privacyNote": "weebsync does not save your credentials. It also only makes changes to your plan to watch list if you explicitly request it to.",
+        "step1": "Enter your AniList username (or log in)",
         "step2": "weebsync reads your list and your friends' ratings",
         "step3": "Your backlog is ranked by what your friends loved",
-        "step4": "Stop scrolling. Watch something good.",
-        "tagline": "Your AniList backlog, ranked by people you trust."
+        "step4": "Pick something to watch or read next",
+        "tagline": "Your AniList backlog, ranked by people you follow.",
+        "useSuggestion": "Use suggestion: {{name}}",
+        "usernameLabel": "AniList username",
+        "usernamePlaceholder": "e.g. weeb"
     },
     "nav": {
         "anime": "Anime",
@@ -128,6 +139,7 @@
         "recModeAriaLabel": "Recommendation mode",
         "recModeDesc": "How to rank friend recommendations",
         "recSection": "Recommendations",
+        "switchUser": "Switch user",
         "title": "Settings"
     },
     "sort": {

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { useAuth } from '../hooks/useAuth'
 import { buildRecommendations, type FriendInfo, type Recommendation } from '../lib/recommendations'
 import { clearCache } from '../store/friendCache'
+import { useIdentity } from '../store/identity'
 import { recordSync, usePreferences } from '../store/preferences'
 import { useFollowing } from './useFollowing'
 import { useFriendLists } from './useFriendLists'
@@ -40,12 +40,12 @@ export interface RecommendationsState {
  * sites trivial — pages destructure what they need without juggling 12 fields.
  */
 export const useRecommendations = (): RecommendationsState => {
-    const { user } = useAuth()
+    const identity = useIdentity()
     const prefs = usePreferences()
     const [syncKey, setSyncKey] = useState(0)
 
-    const viewerResult = useViewer()
-    const userId = viewerResult.data?.Viewer?.id ?? user?.id
+    useViewer()
+    const userId = identity?.userId
 
     const animeListResult = useUserLists(userId, 'ANIME')
     const mangaListResult = useUserLists(userId, 'MANGA')
@@ -116,8 +116,7 @@ export const useRecommendations = (): RecommendationsState => {
         [mangaUserEntries, mangaFriendLists.data, friendInfoById, prefs]
     )
 
-    const isLoadingBase =
-        viewerResult.loading || animeListResult.loading || mangaListResult.loading || followingResult.loading
+    const isLoadingBase = animeListResult.loading || mangaListResult.loading || followingResult.loading
 
     return {
         anime,

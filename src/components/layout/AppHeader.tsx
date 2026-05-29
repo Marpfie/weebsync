@@ -3,10 +3,20 @@ import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useAuth } from '../../hooks/useAuth'
+import { clearIdentity, useIdentity } from '../../store/identity'
 
 export const AppHeader: FC = () => {
     const { t } = useTranslation()
-    const { logout, user } = useAuth()
+    const { logout } = useAuth()
+    const identity = useIdentity()
+
+    const handleSignOut = () => {
+        if (identity?.mode === 'authed') {
+            logout()
+        } else {
+            clearIdentity()
+        }
+    }
 
     return (
         <header className="flex items-center justify-between px-4 py-3 shrink-0 bg-card border-b border-border">
@@ -16,26 +26,31 @@ export const AppHeader: FC = () => {
             </Link>
 
             <div className="flex items-center gap-3">
-                {user && (
+                {identity && (
                     <div className="flex items-center gap-2">
-                        {user.avatar?.medium && (
+                        {identity.avatarUrl && (
                             <img
-                                alt={t('header.avatarAlt', { name: user.name })}
+                                alt={t('header.avatarAlt', { name: identity.name })}
                                 className="rounded-full"
                                 height={28}
-                                src={user.avatar.medium}
+                                src={identity.avatarUrl}
                                 width={28}
                             />
                         )}
-                        <span className="text-sm hidden sm:block text-muted-foreground">{user.name}</span>
+                        <span className="text-sm hidden sm:block text-muted-foreground">{identity.name}</span>
+                        {identity.mode === 'guest' && (
+                            <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                                {t('header.guestBadge')}
+                            </span>
+                        )}
                     </div>
                 )}
                 <button
                     className="text-xs px-2.5 py-1.5 rounded-lg transition-colors bg-secondary text-muted-foreground"
-                    onClick={logout}
+                    onClick={handleSignOut}
                     type="button"
                 >
-                    {t('header.logout')}
+                    {identity?.mode === 'guest' ? t('header.switchUser') : t('header.logout')}
                 </button>
             </div>
         </header>

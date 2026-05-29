@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { MediaRecsPage } from '../components/recommendations/MediaRecsPage'
 import { useRecommendations } from '../hooks/useRecommendations'
-import { requireAuth } from '../lib/route-guards'
+import { requireIdentity } from '../lib/route-guards'
 
 const AnimePage = () => {
     const recs = useRecommendations()
@@ -19,4 +19,4 @@ const AnimePage = () => {
     )
 }
 
-export const Route = createFileRoute('/anime')({ beforeLoad: requireAuth, component: AnimePage })
+export const Route = createFileRoute('/anime')({ beforeLoad: requireIdentity, component: AnimePage })

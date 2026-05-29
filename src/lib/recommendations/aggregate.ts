@@ -40,7 +40,10 @@ const buildSourceMeta = (r: FriendRating): SourceMeta => ({
  * `friendCount`). Only entries with `score >= threshold` contribute to the
  * rating set; everything qualifying counts toward `allWatchers`.
  */
-export const groupByMedia = (ratings: readonly FriendRating[], minScoreThreshold: number): Map<number, MediaAggregate> => {
+export const groupByMedia = (
+    ratings: readonly FriendRating[],
+    minScoreThreshold: number
+): Map<number, MediaAggregate> => {
     const out = new Map<number, MediaAggregate>()
 
     for (const r of ratings) {

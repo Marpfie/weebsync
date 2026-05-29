@@ -7,7 +7,7 @@ import { Switch } from '../components/ui/switch'
 import type { FollowingQuery } from '../gql/graphql'
 import { useFollowing } from '../hooks/useFollowing'
 import { useViewer } from '../hooks/useViewer'
-import { requireAuth } from '../lib/route-guards'
+import { requireIdentity } from '../lib/route-guards'
 import { toggleExcludedFriend, usePreferences } from '../store/preferences'
 
 type FollowingUser = NonNullable<NonNullable<NonNullable<FollowingQuery['Page']>['following']>[number]>
@@ -102,4 +102,4 @@ const FriendsPage = () => {
     )
 }
 
-export const Route = createFileRoute('/friends')({ beforeLoad: requireAuth, component: FriendsPage })
+export const Route = createFileRoute('/friends')({ beforeLoad: requireIdentity, component: FriendsPage })

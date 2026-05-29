@@ -48,10 +48,7 @@ export const MediaCard: FC<MediaCardProps> = ({ className, mode, onDismiss, rec 
                 rel="noopener noreferrer"
                 target="_blank"
             >
-                <div
-                    className="w-16 h-24 rounded-lg overflow-hidden"
-                    style={{ backgroundColor: `${accentColor}33` }}
-                >
+                <div className="w-16 h-24 rounded-lg overflow-hidden" style={{ backgroundColor: `${accentColor}33` }}>
                     {rec.coverMedium ? (
                         <img
                             alt={`Cover art for ${rec.title}`}

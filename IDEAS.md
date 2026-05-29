@@ -9,11 +9,13 @@
 - double baylesian rating?
     - series with many friends who watched should gain a boost over those that dont
     - secondary rating with anilist score (non friend)
-- Unauthenticated mode: allow entering a username instead of OAuth login
-    - show avatar preview when username is typed (debounced lookup)
-    - OAuth login becomes optional ("login for convenience") rather than required
-    - authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
+- authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
 - better status indication
     - visible animated progress bar of the loading queries
     - the status should also work on initial data load, not just for requeries
         - "Last synced: Never" despite snycing initially
+- to combat the rough API limits, maybe the ANIME queries are prioritized, and manga comes last.
+    - add a setting on what to prio so the user can get quicker feedback on what matters to them
+
+- rate how much you agree with your friends
+    - a separate page that gives you an overview of your overlap with other people. this could be used as an indication for who to include in friend ratings. or possibly even for weights later

@@ -16,7 +16,6 @@ interface FriendListsState {
 
 /**
  * Flattens a friend's `MediaListCollection` query result into our flat cache shape.
- * Kept as a pure function so it can be reused / tested independently of Apollo.
  */
 const extractFriendEntries = (
     data: FriendMediaListsQuery | undefined,

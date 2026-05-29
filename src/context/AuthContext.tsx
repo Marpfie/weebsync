@@ -2,6 +2,7 @@ import type { FC, PropsWithChildren } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 
 import { buildAuthUrl, clearToken, getToken, parseTokenFromHash, storeToken } from '../lib/anilist-auth'
+import { clearIdentity } from '../store/identity'
 import { AuthContext, type AuthContextValue, type ViewerUser } from './auth-context'
 
 const clientId = import.meta.env.VITE_ANILIST_CLIENT_ID as string
@@ -21,6 +22,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
     const logout = useCallback(() => {
         clearToken()
+        clearIdentity()
         setToken(null)
         setUser(null)
     }, [])

@@ -11,7 +11,12 @@ interface ReasonContext {
  * Builds the human-readable reason list for a recommendation.
  * Strings are produced in the UI from these structured records (i18n-friendly).
  */
-export const buildReasons = ({ friendCount, isAlreadyStarted, isInPlanList, watchCount }: ReasonContext): ReasonData[] => {
+export const buildReasons = ({
+    friendCount,
+    isAlreadyStarted,
+    isInPlanList,
+    watchCount,
+}: ReasonContext): ReasonData[] => {
     const reasons: ReasonData[] = []
 
     if (isInPlanList) reasons.push({ type: 'inPlanList' })

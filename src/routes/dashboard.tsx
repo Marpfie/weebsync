@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { RecommendationsGrid } from '../components/recommendations/RecommendationsGrid'
 import { SyncStatus } from '../components/sync/SyncStatus'
 import { useRecommendations } from '../hooks/useRecommendations'
-import { requireAuth } from '../lib/route-guards'
+import { requireIdentity } from '../lib/route-guards'
 import { usePreferences } from '../store/preferences'
 
 const TOP_PER_SECTION = 6
@@ -90,4 +90,4 @@ const Dashboard = () => {
     )
 }
 
-export const Route = createFileRoute('/dashboard')({ beforeLoad: requireAuth, component: Dashboard })
+export const Route = createFileRoute('/dashboard')({ beforeLoad: requireIdentity, component: Dashboard })

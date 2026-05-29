@@ -1,15 +1,13 @@
 import { redirect } from '@tanstack/react-router'
 
-import { getToken } from '../lib/anilist-auth'
+import { getIdentity } from '../store/identity'
 
 /**
- * Use as a TanStack Router `beforeLoad` to gate protected routes.
- * Bounces unauthenticated visitors to `/`. Pages no longer need their own
- * `useEffect(() => { if (!token) navigate(...) })` dance.
+ * Use as a TanStack Router `beforeLoad` to gate routes that need a known user.
+ * Identity may come from either an OAuth login or a guest username entry
  */
-export const requireAuth = (): void => {
-    if (!getToken()) {
-        // `redirect` returns a non-Error sentinel that TanStack Router intercepts.
+export const requireIdentity = (): void => {
+    if (!getIdentity()) {
         // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw redirect({ to: '/' })
     }

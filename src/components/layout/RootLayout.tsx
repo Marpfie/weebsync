@@ -1,16 +1,32 @@
-import { Outlet, useRouterState } from '@tanstack/react-router'
+import { useApolloClient } from '@apollo/client/react'
+import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import type { FC } from 'react'
+import { useEffect } from 'react'
 
-import { useAuth } from '../../hooks/useAuth'
+import { useIdentity } from '../../store/identity'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { AppHeader } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
 
 export const RootLayout: FC = () => {
-    const { token } = useAuth()
+    const identity = useIdentity()
     const routerState = useRouterState()
-    const isAuthPage = routerState.location.pathname === '/' || routerState.location.pathname.startsWith('/auth')
+    const navigate = useNavigate()
+    const client = useApolloClient()
+    const pathname = routerState.location.pathname
+    const isOAuthCallback = pathname.startsWith('/auth')
+    const isLandingPage = pathname === '/'
+    const showAppShell = identity != null && !isOAuthCallback && !isLandingPage
+
+    // Whenever identity disappears, cancel any in-flight queries (so friend-list
+    // fetches don't keep burning rate-limit calls) and bounce back to landing.
+    useEffect(() => {
+        if (identity == null && !isOAuthCallback) {
+            void client.clearStore()
+            void navigate({ to: '/' })
+        }
+    }, [identity, isOAuthCallback, client, navigate])
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -20,9 +36,9 @@ export const RootLayout: FC = () => {
             >
                 Skip to main content
             </a>
-            {token && !isAuthPage && <AppHeader />}
+            {showAppShell && <AppHeader />}
             <div className={'flex flex-1'}>
-                {token && !isAuthPage && <AppSidebar />}
+                {showAppShell && <AppSidebar />}
                 <main className="flex-1 min-w-0" id="main-content">
                     <ErrorBoundary>
                         <Outlet />
