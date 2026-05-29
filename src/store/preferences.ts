@@ -21,6 +21,8 @@ export interface Preferences {
     includeCurrentlyWatching: boolean
     lastSyncedAt: null | number
     recommendationMode: RecommendationMode
+    syncAnime: boolean
+    syncManga: boolean
 }
 
 const DEFAULTS: Readonly<Preferences> = Object.freeze({
@@ -32,6 +34,8 @@ const DEFAULTS: Readonly<Preferences> = Object.freeze({
     includeCurrentlyWatching: false,
     lastSyncedAt: null,
     recommendationMode: 'friend-favourites',
+    syncAnime: true,
+    syncManga: false,
 })
 
 const cloneDefaults = (): Preferences => ({
