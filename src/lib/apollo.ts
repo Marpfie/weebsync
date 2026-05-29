@@ -1,7 +1,9 @@
-import { ApolloClient, ApolloLink, HttpLink, InMemoryCache } from '@apollo/client'
+import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, ServerError } from '@apollo/client'
+import { ErrorLink } from '@apollo/client/link/error'
 import { persistCache } from 'apollo3-cache-persist'
+import { toast } from 'sonner'
 
-import { getToken } from './anilist-auth'
+import { clearToken, getToken } from './anilist-auth'
 
 /**
  * Stable type policies. Without these, Apollo cannot reliably cache the
@@ -63,6 +65,51 @@ const httpLink = new HttpLink({ uri: 'https://graphql.anilist.co' })
 const CACHE_KEY = 'apollo-cache-persist'
 
 /**
+ * Surface unrecoverable errors to the user. The rate-limiter handles 429
+ * retries silently; this link only fires when those exhaust, when the auth
+ * token is rejected, or when the network is unreachable. Per-friend 5xx
+ * failures are handled in `useFriendLists` (preserves stale cache) and
+ * intentionally don't toast here.
+ */
+let lastToastedKind: null | string = null
+let lastToastAt = 0
+const TOAST_DEDUP_MS = 5000
+
+const toastOnce = (kind: string, fire: () => void): void => {
+    const now = Date.now()
+    if (lastToastedKind === kind && now - lastToastAt < TOAST_DEDUP_MS) return
+    lastToastedKind = kind
+    lastToastAt = now
+    fire()
+}
+
+const errorLink = new ErrorLink(({ error, operation }) => {
+    if (ServerError.is(error)) {
+        if (error.statusCode === 401) {
+            clearToken()
+            toastOnce('auth', () => toast.error('Your AniList session expired. Please log in again.'))
+            return
+        }
+        if (error.statusCode === 429) {
+            toastOnce('rate-limit', () =>
+                toast.error('AniList rate limit hit — please wait a moment before retrying.')
+            )
+            return
+        }
+        // Per-friend 5xx is handled with stale-data preservation; skip here.
+        if (operation.operationName === 'FriendMediaLists') return
+        toastOnce(`server-${error.statusCode}`, () =>
+            toast.error(`AniList returned an error (${String(error.statusCode)}). Try again later.`)
+        )
+        return
+    }
+
+    if (error instanceof TypeError) {
+        toastOnce('network', () => toast.error('Network error — check your connection and retry.'))
+    }
+})
+
+/**
  * localStorage-backed storage for apollo3-cache-persist.
  *
  * Survives tab reloads. Handles QuotaExceededError by
@@ -116,6 +163,6 @@ export async function initApollo() {
                 nextFetchPolicy: 'cache-first',
             },
         },
-        link: ApolloLink.from([authLink, httpLink]),
+        link: ApolloLink.from([errorLink, authLink, httpLink]),
     })
 }

@@ -1,5 +1,7 @@
 import { useApolloClient } from '@apollo/client/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import type { UserMediaListsQuery } from '../gql/graphql'
 import { UserMediaListsDocument } from '../gql/graphql'
@@ -26,6 +28,7 @@ export const useRecommendationSync = (): void => {
     const identity = useIdentity()
     const prefs = usePreferences()
     const client = useApolloClient()
+    const { t } = useTranslation()
     const [syncKey, setSyncKey] = useState(0)
 
     const userId = identity?.userId
@@ -152,6 +155,22 @@ export const useRecommendationSync = (): void => {
         }
     }, [syncKey, isLoadingFriends, userListsLoading])
 
+    // Emit a completion toast when a manual sync transitions from in-flight
+    // to settled. Counts and surfaces per-friend failures if any happened.
+    const wasLoadingFriends = useRef(false)
+    useEffect(() => {
+        const settling = wasLoadingFriends.current && !isLoadingFriends && syncKey > 0
+        wasLoadingFriends.current = isLoadingFriends
+        if (!settling) return
+
+        const failedCount = animeFriendLists.failedIds.length + mangaFriendLists.failedIds.length
+        if (failedCount > 0) {
+            toast.warning(t('sync.completeWithFailuresToast', { count: failedCount }))
+        } else {
+            toast.success(t('sync.completeToast'))
+        }
+    }, [isLoadingFriends, syncKey, animeFriendLists.failedIds.length, mangaFriendLists.failedIds.length, t])
+
     // Build the actual recommendation lists.
     const anime = useMemo(
         () =>
@@ -195,11 +214,20 @@ export const useRecommendationSync = (): void => {
         setSyncKey((k) => k + 1)
     }, [userId])
 
+    const retryFailed = useCallback(() => {
+        if (animeFriendLists.failedIds.length > 0) animeFriendLists.retry(animeFriendLists.failedIds)
+        if (mangaFriendLists.failedIds.length > 0) mangaFriendLists.retry(mangaFriendLists.failedIds)
+    }, [animeFriendLists, mangaFriendLists])
+
     // Push the latest computed values into the global store.
     useEffect(() => {
         useRecommendationsStore.setState(
             {
                 anime,
+                failedFriendIds: {
+                    anime: animeFriendLists.failedIds,
+                    manga: mangaFriendLists.failedIds,
+                },
                 following,
                 friendProgress: {
                     anime: { current: animeFriendLists.progress, total: animeFriendLists.total },
@@ -211,6 +239,7 @@ export const useRecommendationSync = (): void => {
                 lastSyncedAt: prefs.lastSyncedAt,
                 manga,
                 resync,
+                retryFailed,
                 userId,
             },
             true
@@ -219,6 +248,8 @@ export const useRecommendationSync = (): void => {
         anime,
         manga,
         following,
+        animeFriendLists.failedIds,
+        mangaFriendLists.failedIds,
         animeFriendLists.progress,
         animeFriendLists.total,
         mangaFriendLists.progress,
@@ -228,6 +259,7 @@ export const useRecommendationSync = (): void => {
         syncKey,
         prefs.lastSyncedAt,
         resync,
+        retryFailed,
         userId,
     ])
 }
