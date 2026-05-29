@@ -19,7 +19,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import { Progress } from '../ui/progress'
+import { Progress, ProgressIndicator, ProgressTrack } from '../ui/progress'
 import { Spinner } from '../ui/spinner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 
@@ -218,9 +218,13 @@ export const AppHeader: FC = () => {
                 <div className="flex items-center gap-3 mt-2">
                     <Progress
                         aria-label={t('header.syncProgressAriaLabel')}
-                        className="flex-1 gap-0 [&_[data-slot=progress-track]]:h-1.5 [&_[data-slot=progress-indicator]]:progress-stripes"
+                        className="flex-1 gap-0"
                         value={progressPercent}
-                    />
+                    >
+                        <ProgressTrack className="h-1.5">
+                            <ProgressIndicator className="progress-stripes" />
+                        </ProgressTrack>
+                    </Progress>
                     <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                         {progressCurrent}/{progressTotal}
                     </span>
