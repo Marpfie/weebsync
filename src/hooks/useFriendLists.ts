@@ -1,8 +1,8 @@
 import { useApolloClient } from '@apollo/client/react'
 import { useEffect, useState } from 'react'
 
-import { FriendMediaListsDocument } from '../documents'
 import type { FriendMediaListsQuery, MediaType } from '../gql/graphql'
+import { FriendMediaListsDocument } from '../gql/graphql'
 import { enqueue } from '../lib/rate-limiter'
 import { type FriendCacheEntry, isCacheFresh, loadCache, saveCache } from '../store/friendCache'
 
@@ -15,8 +15,47 @@ interface FriendListsState {
 }
 
 /**
- * syncKey: increment to force a re-fetch regardless of cache freshness.
- * userId: needed to scope the cache. Pass null/undefined to skip fetching.
+ * Flattens a friend's `MediaListCollection` query result into our flat cache shape.
+ * Kept as a pure function so it can be reused / tested independently of Apollo.
+ */
+const extractFriendEntries = (
+    data: FriendMediaListsQuery | undefined,
+    friendId: number,
+    fallbackType: MediaType
+): FriendCacheEntry[] => {
+    const out: FriendCacheEntry[] = []
+    for (const list of data?.MediaListCollection?.lists ?? []) {
+        for (const entry of list?.entries ?? []) {
+            const media = entry?.media
+            if (!media) continue
+            out.push({
+                averageScore: media.averageScore ?? null,
+                chapters: media.chapters ?? null,
+                episodes: media.episodes ?? null,
+                friendId,
+                genres: media.genres ?? null,
+                mediaCover: media.coverImage?.medium ?? null,
+                mediaFormat: media.format ?? null,
+                mediaId: media.id,
+                mediaStatus: media.status ?? null,
+                mediaTitle: media.title?.english ?? media.title?.romaji ?? media.title?.native ?? 'Unknown',
+                mediaType: media.type ?? fallbackType,
+                score: entry.score ?? 0, // 0 = watched but not rated
+                siteUrl: media.siteUrl ?? null,
+                status: entry.status ?? '',
+            })
+        }
+    }
+    return out
+}
+
+/**
+ * Fetches every friend's media list, serially through the rate limiter,
+ * persisting the combined result to a 24h localStorage cache.
+ *
+ * - `syncKey > 0` forces a network re-fetch (used by the manual resync button).
+ * - When the cache is fresh and not being forced, the hook returns the cached
+ *   slice immediately and skips the network entirely.
  */
 export const useFriendLists = (
     friendIds: number[],
@@ -25,8 +64,8 @@ export const useFriendLists = (
     syncKey: number
 ): FriendListsState => {
     const client = useApolloClient()
+
     const [state, setState] = useState<FriendListsState>(() => {
-        // Hydrate from cache immediately so the first render has data
         if (userId) {
             const cached = loadCache(userId, type)
             if (cached && isCacheFresh(cached.cachedAt)) {
@@ -45,7 +84,6 @@ export const useFriendLists = (
     useEffect(() => {
         if (!userId || friendIds.length === 0) return
 
-        // Use cache if fresh and this is not a forced resync (syncKey === 0 means initial)
         const cached = loadCache(userId, type)
         if (syncKey === 0 && cached && isCacheFresh(cached.cachedAt)) {
             // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/set-state-in-effect
@@ -60,65 +98,31 @@ export const useFriendLists = (
         }
 
         let cancelled = false
-
         // eslint-disable-next-line @eslint-react/set-state-in-effect
         setState({ data: [], error: null, loading: true, progress: 0, total: friendIds.length })
 
-        const allEntries: FriendCacheEntry[] = []
+        const aggregated: FriendCacheEntry[] = []
 
         const fetchAll = async () => {
             for (const [index, friendId] of friendIds.entries()) {
                 if (cancelled) return
-
                 try {
                     const result = await enqueue(() =>
                         client.query<FriendMediaListsQuery>({
-                            // Only bypass Apollo cache on a manual resync
                             fetchPolicy: syncKey > 0 ? 'network-only' : 'cache-first',
                             query: FriendMediaListsDocument,
                             variables: { type, userId: friendId },
                         })
                     )
-
-                    const lists = result.data?.MediaListCollection?.lists ?? []
-                    for (const list of lists) {
-                        for (const entry of list?.entries ?? []) {
-                            if (!entry?.media) continue
-                            allEntries.push({
-                                averageScore: entry.media.averageScore ?? null,
-                                chapters: entry.media.chapters ?? null,
-                                episodes: entry.media.episodes ?? null,
-                                friendId,
-                                genres: entry.media.genres ?? null,
-                                mediaCover: entry.media.coverImage?.medium ?? null,
-                                mediaFormat: entry.media.format ?? null,
-                                mediaId: entry.media.id,
-                                mediaStatus: entry.media.status ?? null,
-                                mediaTitle:
-                                    entry.media.title?.english ??
-                                    entry.media.title?.romaji ??
-                                    entry.media.title?.native ??
-                                    'Unknown',
-                                mediaType: entry.media.type ?? type,
-                                score: entry.score ?? 0, // 0 = watched but not rated
-                                siteUrl: entry.media.siteUrl ?? null,
-                                status: entry.status ?? '',
-                            })
-                        }
-                    }
+                    aggregated.push(...extractFriendEntries(result.data, friendId, type))
                 } catch {
-                    // Skip failed friends, continue fetching others
+                    // Skip the failed friend, continue with the rest.
                 }
-
-                setState((previous) => ({
-                    ...previous,
-                    data: [...allEntries],
-                    progress: index + 1,
-                }))
+                setState((previous) => ({ ...previous, data: [...aggregated], progress: index + 1 }))
             }
 
             if (!cancelled) {
-                saveCache(userId, type, allEntries)
+                saveCache(userId, type, aggregated)
                 setState((previous) => ({ ...previous, loading: false }))
             }
         }

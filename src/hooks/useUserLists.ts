@@ -1,11 +1,11 @@
 import { useQuery } from '@apollo/client/react'
 
-import { UserMediaListsDocument } from '../documents'
 import type { MediaType } from '../gql/graphql'
+import { UserMediaListsDocument } from '../gql/graphql'
 
-export const useUserLists = (userId: null | number | undefined, type: MediaType) => {
-    return useQuery(UserMediaListsDocument, {
+/** The current user's own anime or manga list. */
+export const useUserLists = (userId: null | number | undefined, type: MediaType) =>
+    useQuery(UserMediaListsDocument, {
         skip: !userId,
         variables: { type, userId: userId ?? 0 },
     })
-}
