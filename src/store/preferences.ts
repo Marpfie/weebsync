@@ -11,7 +11,6 @@ import type { MediaType, RecommendationMode } from '../lib/recommendations'
  */
 
 const STORAGE_KEY = 'weebsync_prefs'
-const LEGACY_LAST_SYNC_KEY = 'weebsync_last_sync'
 
 export interface Preferences {
     dismissedAnimeIds: number[]
@@ -43,28 +42,13 @@ const cloneDefaults = (): Preferences => ({
 })
 
 const readFromStorage = (): Preferences => {
-    let parsed: Partial<Preferences> = {}
     try {
         const raw = localStorage.getItem(STORAGE_KEY)
-        if (raw) parsed = JSON.parse(raw) as Partial<Preferences>
+        if (raw) return { ...cloneDefaults(), ...(JSON.parse(raw) as Partial<Preferences>) }
     } catch {
-        // Corrupt JSON — fall back to defaults rather than throw at boot.
+        // Corrupt JSON — fall back to defaults.
     }
-
-    // One-time migration: fold the standalone last-sync key into prefs.
-    if (parsed.lastSyncedAt == null) {
-        try {
-            const legacy = localStorage.getItem(LEGACY_LAST_SYNC_KEY)
-            if (legacy) {
-                parsed.lastSyncedAt = JSON.parse(legacy) as number
-                localStorage.removeItem(LEGACY_LAST_SYNC_KEY)
-            }
-        } catch {
-            // ignore
-        }
-    }
-
-    return { ...cloneDefaults(), ...parsed }
+    return cloneDefaults()
 }
 
 let snapshot: Preferences = readFromStorage()
