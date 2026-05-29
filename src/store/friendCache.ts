@@ -1,29 +1,19 @@
 /**
- * Persists friend media list data in localStorage so page reloads don't
- * re-queue all requests. Cache is keyed by userId + mediaType.
- * A manual resync clears and re-fetches.
+ * Persists friend media-list data in localStorage so page reloads don't
+ * re-queue every request. Keyed by userId + mediaType.
+ *
+ * Last-sync timestamp lives in `preferences.ts`, not here, to keep storage
+ * concerns from drifting across multiple modules.
  */
 
+import type { FriendRating, MediaType } from '../lib/recommendations'
+
 const CACHE_PREFIX = 'weebsync_fcache_'
-const LAST_SYNC_KEY = 'weebsync_last_sync'
+export const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24h
 
-export const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
-
-export interface FriendCacheEntry {
-    averageScore: null | number
-    chapters: null | number
-    episodes: null | number
-    friendId: number
-    genres: (null | string)[] | null
-    mediaCover: null | string
-    mediaFormat: null | string
-    mediaId: number
-    mediaStatus: null | string
-    mediaTitle: string
+/** What we store per (user, mediaType). Mirrors `FriendRating` plus the original mediaType. */
+export interface FriendCacheEntry extends FriendRating {
     mediaType: string
-    score: number
-    siteUrl: null | string
-    status: string
 }
 
 interface CachePayload {
@@ -31,53 +21,31 @@ interface CachePayload {
     entries: FriendCacheEntry[]
 }
 
-const key = (userId: number, type: string) => `${CACHE_PREFIX}${userId}_${type}`
+const cacheKey = (userId: number, type: MediaType): string => `${CACHE_PREFIX}${userId}_${type}`
 
-export const loadCache = (
-    userId: number,
-    type: string
-): undefined | { cachedAt: number; entries: FriendCacheEntry[] } => {
+export const loadCache = (userId: number, type: MediaType): CachePayload | undefined => {
     try {
-        const raw = localStorage.getItem(key(userId, type))
-
-        if (!raw) return
-
+        const raw = localStorage.getItem(cacheKey(userId, type))
+        if (!raw) return undefined
         return JSON.parse(raw) as CachePayload
     } catch {
-        return
+        return undefined
     }
 }
 
-export const saveCache = (userId: number, type: string, entries: FriendCacheEntry[]): void => {
+export const saveCache = (userId: number, type: MediaType, entries: FriendCacheEntry[]): void => {
     try {
         const payload: CachePayload = { cachedAt: Date.now(), entries }
-        localStorage.setItem(key(userId, type), JSON.stringify(payload))
+        localStorage.setItem(cacheKey(userId, type), JSON.stringify(payload))
     } catch {
-        // localStorage quota exceeded, silently skip caching
+        // Quota exceeded — degrade gracefully, the in-memory state still works.
     }
 }
 
 export const clearCache = (userId: number): void => {
     try {
-        localStorage.removeItem(key(userId, 'ANIME'))
-        localStorage.removeItem(key(userId, 'MANGA'))
-    } catch {
-        // ignore
-    }
-}
-
-export const getLastSyncTime = (): number | undefined => {
-    try {
-        const raw = localStorage.getItem(LAST_SYNC_KEY)
-        return raw ? (JSON.parse(raw) as number) : undefined
-    } catch {
-        return
-    }
-}
-
-export const saveLastSyncTime = (ts: number): void => {
-    try {
-        localStorage.setItem(LAST_SYNC_KEY, JSON.stringify(ts))
+        localStorage.removeItem(cacheKey(userId, 'ANIME'))
+        localStorage.removeItem(cacheKey(userId, 'MANGA'))
     } catch {
         // ignore
     }
