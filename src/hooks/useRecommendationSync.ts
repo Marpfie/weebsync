@@ -52,12 +52,8 @@ export const useRecommendationSync = (enabled = true): void => {
 
     // User's own lists (anime/manga) — drive via the persisted cache when
     // fresh, otherwise enqueue through the rate limiter at top priority.
-    const [animeUserEntries, setAnimeUserEntries] = useState<UserMediaEntry[]>(() =>
-        userId ? (loadUserListCache(userId, 'ANIME')?.entries ?? []) : []
-    )
-    const [mangaUserEntries, setMangaUserEntries] = useState<UserMediaEntry[]>(() =>
-        userId ? (loadUserListCache(userId, 'MANGA')?.entries ?? []) : []
-    )
+    const [animeUserEntries, setAnimeUserEntries] = useState<UserMediaEntry[]>([])
+    const [mangaUserEntries, setMangaUserEntries] = useState<UserMediaEntry[]>([])
     const [userListsLoading, setUserListsLoading] = useState(false)
 
     useEffect(() => {
@@ -68,28 +64,6 @@ export const useRecommendationSync = (enabled = true): void => {
 
         let cancelled = false
         const force = syncKey > 0
-        const animeCache = loadUserListCache(userId, 'ANIME')
-        const mangaCache = loadUserListCache(userId, 'MANGA')
-
-        const animeNeedsFetch = force || !animeCache || !isUserListCacheFresh(animeCache.cachedAt)
-        const mangaNeedsFetch = force || !mangaCache || !isUserListCacheFresh(mangaCache.cachedAt)
-
-        if (!animeNeedsFetch && !mangaNeedsFetch) {
-            console.debug(
-                `[userLists] both caches hit (anime age ${Math.round((Date.now() - animeCache.cachedAt) / 1000)}s, manga age ${Math.round((Date.now() - mangaCache.cachedAt) / 1000)}s)`
-            )
-            // eslint-disable-next-line @eslint-react/set-state-in-effect
-            setAnimeUserEntries(animeCache.entries)
-            // eslint-disable-next-line @eslint-react/set-state-in-effect
-            setMangaUserEntries(mangaCache.entries)
-            return
-        }
-        console.debug(
-            `[userLists] cache MISS — force=${force}, animeNeedsFetch=${animeNeedsFetch}, mangaNeedsFetch=${mangaNeedsFetch}`
-        )
-
-        // eslint-disable-next-line @eslint-react/set-state-in-effect
-        setUserListsLoading(true)
 
         const fetchOne = async (type: 'ANIME' | 'MANGA') => {
             const result = await enqueue(
@@ -105,17 +79,44 @@ export const useRecommendationSync = (enabled = true): void => {
         }
 
         const run = async () => {
+            const [animeCache, mangaCache] = await Promise.all([
+                loadUserListCache(userId, 'ANIME'),
+                loadUserListCache(userId, 'MANGA'),
+            ])
+            if (cancelled) return
+
+            const animeNeedsFetch = force || !animeCache || !isUserListCacheFresh(animeCache.cachedAt)
+            const mangaNeedsFetch = force || !mangaCache || !isUserListCacheFresh(mangaCache.cachedAt)
+
+            if (!animeNeedsFetch && !mangaNeedsFetch) {
+                console.debug(
+                    `[userLists] both caches hit (anime age ${Math.round((Date.now() - animeCache.cachedAt) / 1000)}s, manga age ${Math.round((Date.now() - mangaCache.cachedAt) / 1000)}s)`
+                )
+                setAnimeUserEntries(animeCache.entries)
+                setMangaUserEntries(mangaCache.entries)
+                return
+            }
+            console.debug(
+                `[userLists] cache MISS — force=${force}, animeNeedsFetch=${animeNeedsFetch}, mangaNeedsFetch=${mangaNeedsFetch}`
+            )
+
+            // Seed UI from stale cache so we don't briefly render empty
+            // while the network round-trips.
+            if (animeCache) setAnimeUserEntries(animeCache.entries)
+            if (mangaCache) setMangaUserEntries(mangaCache.entries)
+
+            setUserListsLoading(true)
             try {
                 if (animeNeedsFetch) {
                     const entries = await fetchOne('ANIME')
                     if (cancelled) return
-                    saveUserListCache(userId, 'ANIME', entries)
+                    void saveUserListCache(userId, 'ANIME', entries)
                     setAnimeUserEntries(entries)
                 }
                 if (mangaNeedsFetch) {
                     const entries = await fetchOne('MANGA')
                     if (cancelled) return
-                    saveUserListCache(userId, 'MANGA', entries)
+                    void saveUserListCache(userId, 'MANGA', entries)
                     setMangaUserEntries(entries)
                 }
             } finally {
@@ -258,8 +259,8 @@ export const useRecommendationSync = (enabled = true): void => {
 
     const resync = useCallback(() => {
         if (userId) {
-            clearCache(userId)
-            clearUserListCache(userId)
+            void clearCache(userId)
+            void clearUserListCache(userId)
         }
         setIsSyncing(true)
         setSyncKey((k) => k + 1)

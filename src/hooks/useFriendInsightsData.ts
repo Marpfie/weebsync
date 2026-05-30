@@ -1,10 +1,8 @@
 import { useMemo } from 'react'
 
 import type { FriendRating, UserMediaEntry } from '../lib/recommendations'
-import { loadCache } from '../store/friendCache'
 import { useIdentity } from '../store/identity'
 import { useRecommendationsStore } from '../store/recommendationsStore'
-import { loadUserListCache } from '../store/userListCache'
 
 export interface FriendInsightsData {
     animeRatings: readonly FriendRating[]
@@ -18,13 +16,8 @@ export interface FriendInsightsData {
 /**
  * Reads raw friend ratings + the user's own lists straight out of the
  * recommendations store. The store is the source of truth — it is populated
- * by `useRecommendationSync` (mounted in `RootLayout`) and stays reactive
- * across navigations.
- *
- * Falls back to the persisted caches only when the store is still empty
- * (e.g. the orchestrator hasn't run yet on this tab), so the insight pages
- * have *something* to show on a cold mount before the sync hook finishes
- * hydrating.
+ * by `useRecommendationSync` (mounted in `RootLayout`) which hydrates from
+ * the IndexedDB cache asynchronously on mount.
  */
 export const useFriendInsightsData = (): FriendInsightsData => {
     const identity = useIdentity()
@@ -45,21 +38,12 @@ export const useFriendInsightsData = (): FriendInsightsData => {
                 mangaUserEntries: [],
             }
         }
-        // Cold-mount fallback: store empty but persisted cache may have data.
-        const animeRatings =
-            animeFriendRatings.length > 0 ? animeFriendRatings : (loadCache(userId, 'ANIME')?.entries ?? [])
-        const mangaRatings =
-            mangaFriendRatings.length > 0 ? mangaFriendRatings : (loadCache(userId, 'MANGA')?.entries ?? [])
-        const animeUser =
-            animeUserEntries.length > 0 ? animeUserEntries : (loadUserListCache(userId, 'ANIME')?.entries ?? [])
-        const mangaUser =
-            mangaUserEntries.length > 0 ? mangaUserEntries : (loadUserListCache(userId, 'MANGA')?.entries ?? [])
         return {
-            animeRatings,
-            animeUserEntries: animeUser,
+            animeRatings: animeFriendRatings,
+            animeUserEntries,
             lastSyncedAt,
-            mangaRatings,
-            mangaUserEntries: mangaUser,
+            mangaRatings: mangaFriendRatings,
+            mangaUserEntries,
         }
     }, [userId, animeFriendRatings, mangaFriendRatings, animeUserEntries, mangaUserEntries, lastSyncedAt])
 }

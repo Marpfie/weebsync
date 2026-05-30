@@ -86,55 +86,24 @@ export const useFriendLists = (
     const [retryCounter, setRetryCounter] = useState(0)
     const retryIdsRef = useRef<number[]>([])
 
-    const [state, setState] = useState<FriendListsState>(() => {
-        if (userId) {
-            const cached = loadCache(userId, type)
-            if (cached && isCacheFresh(cached.cachedAt)) {
-                return {
-                    data: cached.entries,
-                    error: null,
-                    failedIds: [],
-                    loading: false,
-                    progress: cached.entries.length,
-                    total: cached.entries.length,
-                }
-            }
-        }
-        return { data: [], error: null, failedIds: [], loading: false, progress: 0, total: 0 }
-    })
+    const [state, setState] = useState<FriendListsState>(() => ({
+        data: [],
+        error: null,
+        failedIds: [],
+        loading: false,
+        progress: 0,
+        total: 0,
+    }))
 
     useEffect(() => {
         if (!userId || friendIds.length === 0) return
 
-        const cached = loadCache(userId, type)
-
-        if (syncKey === 0 && cached && isCacheFresh(cached.cachedAt)) {
-            console.debug(
-                `[useFriendLists] ${type} cache hit (age ${Math.round((Date.now() - cached.cachedAt) / 1000)}s, ${cached.entries.length} entries)`
-            )
-            // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/set-state-in-effect
-            setState({
-                data: cached.entries,
-                error: null,
-                failedIds: [],
-                loading: false,
-                progress: cached.entries.length,
-                total: cached.entries.length,
-            })
-            return
-        }
-        console.debug(
-            `[useFriendLists] ${type} cache MISS — syncKey=${syncKey}, hasCache=${!!cached}, fresh=${cached ? isCacheFresh(cached.cachedAt) : 'n/a'}`
-        )
-
         let cancelled = false
-        // eslint-disable-next-line @eslint-react/set-state-in-effect
-        setState({ data: [], error: null, failedIds: [], loading: true, progress: 0, total: friendIds.length })
 
-        const aggregated: FriendCacheEntry[] = []
-        const failed: number[] = []
+        const fetchAll = async (cached: Awaited<ReturnType<typeof loadCache>>) => {
+            const aggregated: FriendCacheEntry[] = []
+            const failed: number[] = []
 
-        const fetchAll = async () => {
             for (const [index, friendId] of friendIds.entries()) {
                 if (cancelled) return
                 try {
@@ -173,11 +142,37 @@ export const useFriendLists = (
                 }
             }
 
-            saveCache(userId, type, aggregated)
+            void saveCache(userId, type, aggregated)
             setState((previous) => ({ ...previous, data: aggregated, loading: false }))
         }
 
-        void fetchAll()
+        const run = async () => {
+            const cached = await loadCache(userId, type)
+            if (cancelled) return
+
+            if (syncKey === 0 && cached && isCacheFresh(cached.cachedAt)) {
+                console.debug(
+                    `[useFriendLists] ${type} cache hit (age ${Math.round((Date.now() - cached.cachedAt) / 1000)}s, ${cached.entries.length} entries)`
+                )
+                setState({
+                    data: cached.entries,
+                    error: null,
+                    failedIds: [],
+                    loading: false,
+                    progress: friendIds.length,
+                    total: friendIds.length,
+                })
+                return
+            }
+            console.debug(
+                `[useFriendLists] ${type} cache MISS — syncKey=${syncKey}, hasCache=${!!cached}, fresh=${cached ? isCacheFresh(cached.cachedAt) : 'n/a'}`
+            )
+
+            setState({ data: [], error: null, failedIds: [], loading: true, progress: 0, total: friendIds.length })
+            await fetchAll(cached)
+        }
+
+        void run()
 
         return () => {
             cancelled = true
@@ -226,7 +221,7 @@ export const useFriendLists = (
                 // still-failed) and merge the fresh entries in.
                 const carried = previous.data.filter((entry) => !retried.has(entry.friendId))
                 const merged = [...carried, ...freshEntries]
-                saveCache(userId, type, merged)
+                void saveCache(userId, type, merged)
                 return {
                     ...previous,
                     data: merged,

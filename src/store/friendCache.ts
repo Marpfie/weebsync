@@ -1,11 +1,13 @@
 /**
- * Persists friend media-list data in localStorage so page reloads don't
- * re-queue every request. Keyed by userId + mediaType.
+ * Persists friend media-list data so page reloads don't re-queue every
+ * request. Keyed by userId + mediaType.
  *
+ * Backed by IndexedDB
  * Last-sync timestamp lives in `preferences.ts`, not here, to keep storage
  * concerns from drifting across multiple modules.
  */
 
+import { idbDelete, idbGet, idbSet } from '../lib/idb'
 import type { FriendRating, MediaType } from '../lib/recommendations'
 import { CACHE_TTL_MS, STORAGE_KEYS } from '../lib/storage-keys'
 
@@ -21,38 +23,21 @@ interface CachePayload {
 
 const cacheKey = (userId: number, type: MediaType): string => `${STORAGE_KEYS.FRIEND_CACHE_PREFIX}${userId}_${type}`
 
-export const loadCache = (userId: number, type: MediaType): CachePayload | undefined => {
-    try {
-        const raw = localStorage.getItem(cacheKey(userId, type))
-        if (!raw) return undefined
-        return JSON.parse(raw) as CachePayload
-    } catch {
-        return undefined
-    }
-}
+export const loadCache = async (userId: number, type: MediaType): Promise<CachePayload | undefined> =>
+    idbGet<CachePayload>(cacheKey(userId, type))
 
-export const saveCache = (userId: number, type: MediaType, entries: FriendCacheEntry[]): void => {
+export const saveCache = async (userId: number, type: MediaType, entries: FriendCacheEntry[]): Promise<void> => {
     const payload: CachePayload = { cachedAt: Date.now(), entries }
-    const json = JSON.stringify(payload)
-    try {
-        localStorage.setItem(cacheKey(userId, type), json)
-        console.debug(`[friendCache] saved ${type} (${entries.length} entries, ${Math.round(json.length / 1024)}KB)`)
-    } catch (error) {
-        // Quota exceeded — degrade gracefully, the in-memory state still works.
-        console.warn(
-            `[friendCache] FAILED to save ${type} cache (${entries.length} entries, ${Math.round(json.length / 1024)}KB):`,
-            error
-        )
+    const ok = await idbSet(cacheKey(userId, type), payload)
+    if (ok) {
+        console.debug(`[friendCache] saved ${type} (${entries.length} entries)`)
+    } else {
+        console.warn(`[friendCache] FAILED to save ${type} cache (${entries.length} entries)`)
     }
 }
 
-export const clearCache = (userId: number): void => {
-    try {
-        localStorage.removeItem(cacheKey(userId, 'ANIME'))
-        localStorage.removeItem(cacheKey(userId, 'MANGA'))
-    } catch {
-        // ignore
-    }
+export const clearCache = async (userId: number): Promise<void> => {
+    await Promise.all([idbDelete(cacheKey(userId, 'ANIME')), idbDelete(cacheKey(userId, 'MANGA'))])
 }
 
 export const isCacheFresh = (cachedAt: number): boolean => Date.now() - cachedAt < CACHE_TTL_MS

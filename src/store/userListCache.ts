@@ -1,9 +1,10 @@
 /**
- * Persists the current user's own media lists in localStorage so reloads
- * and tab switches don't re-fetch them. Mirrors `friendCache.ts` shape and
- * TTL so the two caches behave identically.
+ * Persists the current user's own media lists so reloads and tab switches
+ * don't re-fetch them. Mirrors `friendCache.ts` (now IndexedDB-backed) for
+ * the same quota-headroom reasons.
  */
 
+import { idbDelete, idbGet, idbSet } from '../lib/idb'
 import type { MediaType, UserMediaEntry } from '../lib/recommendations'
 import { CACHE_TTL_MS, STORAGE_KEYS } from '../lib/storage-keys'
 
@@ -14,32 +15,22 @@ interface UserListCachePayload {
 
 const cacheKey = (userId: number, type: MediaType): string => `${STORAGE_KEYS.USER_LIST_CACHE_PREFIX}${userId}_${type}`
 
-export const loadUserListCache = (userId: number, type: MediaType): undefined | UserListCachePayload => {
-    try {
-        const raw = localStorage.getItem(cacheKey(userId, type))
-        if (!raw) return undefined
-        return JSON.parse(raw) as UserListCachePayload
-    } catch {
-        return undefined
-    }
+export const loadUserListCache = async (
+    userId: number,
+    type: MediaType
+): Promise<undefined | UserListCachePayload> => idbGet<UserListCachePayload>(cacheKey(userId, type))
+
+export const saveUserListCache = async (
+    userId: number,
+    type: MediaType,
+    entries: UserMediaEntry[]
+): Promise<void> => {
+    const payload: UserListCachePayload = { cachedAt: Date.now(), entries }
+    await idbSet(cacheKey(userId, type), payload)
 }
 
-export const saveUserListCache = (userId: number, type: MediaType, entries: UserMediaEntry[]): void => {
-    try {
-        const payload: UserListCachePayload = { cachedAt: Date.now(), entries }
-        localStorage.setItem(cacheKey(userId, type), JSON.stringify(payload))
-    } catch {
-        // Quota exceeded — graceful degradation, in-memory state still works.
-    }
-}
-
-export const clearUserListCache = (userId: number): void => {
-    try {
-        localStorage.removeItem(cacheKey(userId, 'ANIME'))
-        localStorage.removeItem(cacheKey(userId, 'MANGA'))
-    } catch {
-        // ignore
-    }
+export const clearUserListCache = async (userId: number): Promise<void> => {
+    await Promise.all([idbDelete(cacheKey(userId, 'ANIME')), idbDelete(cacheKey(userId, 'MANGA'))])
 }
 
 export const isUserListCacheFresh = (cachedAt: number): boolean => Date.now() - cachedAt < CACHE_TTL_MS

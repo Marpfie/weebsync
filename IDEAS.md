@@ -22,3 +22,5 @@
 - /agreement and /stats: per-row sparkline showing the friend's score distribution (10-bin histogram) for quick gestalt of rating style
 - /stats summary header: median bias / median conformity across friends so users have a frame of reference for individual rows
 - friend-list cache: if quota becomes a real issue, switch to IndexedDB (no 5MB cap) or prune fields we don't need on recommendation pages
+- friends
+    - instead of only X anime rated · X manga rated, could display watched/read as well. could matter depending on recommendation mode
