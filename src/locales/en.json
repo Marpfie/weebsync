@@ -1,4 +1,24 @@
 {
+    "agreement": {
+        "col": {
+            "avgDelta": "Avg Δ",
+            "friend": "Friend",
+            "meanAbsDiff": "Mean |Δ|",
+            "overlap": "Shared",
+            "pearson": "Pearson"
+        },
+        "emptyDescription": "Rate some items on AniList (and let your friends do the same) so we can compare.",
+        "emptyTitle": "No data yet",
+        "footnote": "Excluded friends still appear here; exclusion only affects recommendations.",
+        "footnoteLink": "Manage friends",
+        "legendDelta": "Δ: positive = friend rates higher than you",
+        "legendMinOverlap": "Minimum 3 shared ratings",
+        "legendPearson": "Pearson: -1 disagree · 0 unrelated · +1 agree",
+        "noOverlapDescription": "We need at least 3 items rated by both you and a friend to compute correlation.",
+        "noOverlapTitle": "Not enough overlap",
+        "subtitle": "How closely each friend's ratings match yours, computed from items you've both rated.",
+        "title": "Friend Agreement"
+    },
     "badge": {
         "new": "Not on your list",
         "plan": "In your backlog",
@@ -23,7 +43,11 @@
         "weightedTitleMostAgreed": "Ranking score: friend consensus (count × avg)"
     },
     "dashboard": {
+        "animeBacklog": "Anime from your backlog",
+        "animeNew": "New anime discoveries",
         "backlogPicks": "Your Backlog Picks",
+        "mangaBacklog": "Manga from your backlog",
+        "mangaNew": "New manga discoveries",
         "noAnime": "No anime recommendations yet. Add friends on AniList and resync.",
         "noManga": "No manga recommendations yet. Add friends on AniList and resync.",
         "partialSyncBody_anime": "Anime sync is currently off, so no anime recommendations are being generated. Enable it in Settings if you want them.",
@@ -34,11 +58,7 @@
         "seeAll": "See all →",
         "subtitle_one": "{{count}} friend contributing to your recommendations",
         "subtitle_other": "{{count}} friends contributing to your recommendations",
-        "title": "Dashboard",
-        "animeBacklog": "Anime from your backlog",
-        "animeNew": "New anime discoveries",
-        "mangaBacklog": "Manga from your backlog",
-        "mangaNew": "New manga discoveries"
+        "title": "Dashboard"
     },
     "filter": {
         "adult": {
@@ -122,12 +142,12 @@
         "logout": "Sign out",
         "modeAuthed": "Signed in with AniList",
         "modeGuest": "Browsing as guest",
-        "rateLimited": "Rate limited — resuming in {{seconds}}s",
-        "rateLimitReached": "Rate limit reached",
         "quotaLabel": "AniList quota",
-        "quotaValue": "{{remaining}}/{{limit}}",
         "quotaResetIn": "resets in {{seconds}}s",
         "quotaTooltip": "{{remaining}} of {{limit}} requests left in this minute — resets in {{seconds}}s",
+        "quotaValue": "{{remaining}}/{{limit}}",
+        "rateLimitReached": "Rate limit reached",
+        "rateLimited": "Rate limited — resuming in {{seconds}}s",
         "retryFailedAriaLabel": "Retry failed friend syncs",
         "switchUser": "Switch user",
         "syncAriaLabel": "Resync data from AniList",
@@ -154,11 +174,13 @@
         "usernamePlaceholder": "e.g. weeb"
     },
     "nav": {
+        "agreement": "Agreement",
         "anime": "Anime",
         "dashboard": "Dashboard",
         "friends": "Friends",
         "manga": "Manga",
         "settings": "Settings",
+        "stats": "Hipsters & Haters",
         "title1": "weeb",
         "title2": "sync"
     },
@@ -224,6 +246,15 @@
         "recMode": "Recommendation mode",
         "recModeAriaLabel": "Recommendation mode",
         "recModeDesc": "How to rank friend recommendations",
+        "recModeHelp": "How recommendation modes work",
+        "recModeHelpAria": "Explain recommendation modes",
+        "recModeHelpFriendFavouritesBody": "Blends your friends' scores with AniList's community score. Best general-purpose ranking: one enthusiastic friend won't dominate, and items many friends watched bubble up over niche picks.",
+        "recModeHelpFriendFavouritesTitle": "Friend Favourites (default)",
+        "recModeHelpFriendsOnlyBody": "Ignores AniList's community score entirely. Useful if your taste skews against the crowd and you only trust people you follow.",
+        "recModeHelpFriendsOnlyTitle": "Friends Only",
+        "recModeHelpIntro": "All modes start from the same friend data with different ranking mechanisms.",
+        "recModeHelpMostAgreedBody": "Rewards friend consensus. A show 5 friends all rated 8 beats one rated 10 by a single person. Use this when you want safer picks.",
+        "recModeHelpMostAgreedTitle": "Most Agreed On",
         "recSection": "Recommendations",
         "switchUser": "Switch user",
         "sync": {
@@ -240,6 +271,33 @@
         "legend": "Sort recommendations",
         "mostFriends": "Most friends",
         "topRated": "Top rated"
+    },
+    "stats": {
+        "bias": "Net bias",
+        "biasDescription": "Signed average. Positive = generally rates above crowd; negative = below.",
+        "col": {
+            "bias": "Bias",
+            "conformity": "Conformity",
+            "friend": "Friend",
+            "hater": "Hater",
+            "hipster": "Hipster",
+            "sample": "Rated"
+        },
+        "conformist": "Conformity",
+        "conformistDescription": "Average absolute distance from AniList score. Lower = more in line with the crowd.",
+        "emptyDescription": "Sync your friend list first. Hipster/hater scores need rated items with an AniList community score.",
+        "emptyTitle": "No friend ratings yet",
+        "hater": "Hater",
+        "haterDescription": "Average rating below the AniList crowd, when below. Higher = bigger under-rater.",
+        "hipster": "Hipster",
+        "hipsterDescription": "Average rating above the AniList crowd, when above. Higher = bigger over-rater.",
+        "noScore": "—",
+        "rated": "rated",
+        "sortLabel": "Sort by",
+        "subtitle": "Who rates against the crowd. Computed by comparing each friend's ratings to the AniList community average.",
+        "title": "Hipsters & Haters",
+        "topAnime": "Top hipster picks (anime)",
+        "topManga": "Top hipster picks (manga)"
     },
     "sync": {
         "completeToast": "Friends resynced",

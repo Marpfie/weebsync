@@ -9,14 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as MangaRouteImport } from './routes/manga'
 import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AnimeRouteImport } from './routes/anime'
+import { Route as AgreementRouteImport } from './routes/agreement'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -42,6 +49,11 @@ const AnimeRoute = AnimeRouteImport.update({
   path: '/anime',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgreementRoute = AgreementRouteImport.update({
+  id: '/agreement',
+  path: '/agreement',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,74 +67,95 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agreement': typeof AgreementRoute
   '/anime': typeof AnimeRoute
   '/dashboard': typeof DashboardRoute
   '/friends': typeof FriendsRoute
   '/manga': typeof MangaRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agreement': typeof AgreementRoute
   '/anime': typeof AnimeRoute
   '/dashboard': typeof DashboardRoute
   '/friends': typeof FriendsRoute
   '/manga': typeof MangaRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agreement': typeof AgreementRoute
   '/anime': typeof AnimeRoute
   '/dashboard': typeof DashboardRoute
   '/friends': typeof FriendsRoute
   '/manga': typeof MangaRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agreement'
     | '/anime'
     | '/dashboard'
     | '/friends'
     | '/manga'
     | '/settings'
+    | '/stats'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agreement'
     | '/anime'
     | '/dashboard'
     | '/friends'
     | '/manga'
     | '/settings'
+    | '/stats'
     | '/auth/callback'
   id:
     | '__root__'
     | '/'
+    | '/agreement'
     | '/anime'
     | '/dashboard'
     | '/friends'
     | '/manga'
     | '/settings'
+    | '/stats'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgreementRoute: typeof AgreementRoute
   AnimeRoute: typeof AnimeRoute
   DashboardRoute: typeof DashboardRoute
   FriendsRoute: typeof FriendsRoute
   MangaRoute: typeof MangaRoute
   SettingsRoute: typeof SettingsRoute
+  StatsRoute: typeof StatsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -158,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnimeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agreement': {
+      id: '/agreement'
+      path: '/agreement'
+      fullPath: '/agreement'
+      preLoaderRoute: typeof AgreementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,11 +217,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgreementRoute: AgreementRoute,
   AnimeRoute: AnimeRoute,
   DashboardRoute: DashboardRoute,
   FriendsRoute: FriendsRoute,
   MangaRoute: MangaRoute,
   SettingsRoute: SettingsRoute,
+  StatsRoute: StatsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport

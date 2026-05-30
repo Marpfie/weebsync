@@ -109,6 +109,9 @@ export const useFriendLists = (
         const cached = loadCache(userId, type)
 
         if (syncKey === 0 && cached && isCacheFresh(cached.cachedAt)) {
+            console.debug(
+                `[useFriendLists] ${type} cache hit (age ${Math.round((Date.now() - cached.cachedAt) / 1000)}s, ${cached.entries.length} entries)`
+            )
             // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/set-state-in-effect
             setState({
                 data: cached.entries,
@@ -120,6 +123,9 @@ export const useFriendLists = (
             })
             return
         }
+        console.debug(
+            `[useFriendLists] ${type} cache MISS — syncKey=${syncKey}, hasCache=${!!cached}, fresh=${cached ? isCacheFresh(cached.cachedAt) : 'n/a'}`
+        )
 
         let cancelled = false
         // eslint-disable-next-line @eslint-react/set-state-in-effect

@@ -75,12 +75,18 @@ export const useRecommendationSync = (enabled = true): void => {
         const mangaNeedsFetch = force || !mangaCache || !isUserListCacheFresh(mangaCache.cachedAt)
 
         if (!animeNeedsFetch && !mangaNeedsFetch) {
+            console.debug(
+                `[userLists] both caches hit (anime age ${Math.round((Date.now() - animeCache.cachedAt) / 1000)}s, manga age ${Math.round((Date.now() - mangaCache.cachedAt) / 1000)}s)`
+            )
             // eslint-disable-next-line @eslint-react/set-state-in-effect
             setAnimeUserEntries(animeCache.entries)
             // eslint-disable-next-line @eslint-react/set-state-in-effect
             setMangaUserEntries(mangaCache.entries)
             return
         }
+        console.debug(
+            `[userLists] cache MISS — force=${force}, animeNeedsFetch=${animeNeedsFetch}, mangaNeedsFetch=${mangaNeedsFetch}`
+        )
 
         // eslint-disable-next-line @eslint-react/set-state-in-effect
         setUserListsLoading(true)
@@ -269,6 +275,8 @@ export const useRecommendationSync = (enabled = true): void => {
         useRecommendationsStore.setState(
             {
                 anime,
+                animeFriendRatings: animeFriendLists.data,
+                animeUserEntries,
                 failedFriendIds: {
                     anime: animeFriendLists.failedIds,
                     manga: mangaFriendLists.failedIds,
@@ -284,6 +292,8 @@ export const useRecommendationSync = (enabled = true): void => {
                 isSyncing,
                 lastSyncedAt: prefs.lastSyncedAt,
                 manga,
+                mangaFriendRatings: mangaFriendLists.data,
+                mangaUserEntries,
                 resync,
                 retryFailed,
                 userId,
@@ -294,6 +304,10 @@ export const useRecommendationSync = (enabled = true): void => {
         anime,
         manga,
         following,
+        animeFriendLists.data,
+        mangaFriendLists.data,
+        animeUserEntries,
+        mangaUserEntries,
         animeFriendLists.failedIds,
         mangaFriendLists.failedIds,
         animeFriendLists.progress,

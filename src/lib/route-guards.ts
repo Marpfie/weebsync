@@ -1,7 +1,7 @@
 import { redirect } from '@tanstack/react-router'
 
-import { getToken } from './anilist-auth'
 import { getIdentity } from '../store/identity'
+import { getToken } from './anilist-auth'
 
 /**
  * Use as a TanStack Router `beforeLoad` to gate routes that need a known user.

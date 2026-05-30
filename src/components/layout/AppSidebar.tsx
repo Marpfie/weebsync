@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { BookOpen, Clapperboard, LayoutDashboard, Settings, Users } from 'lucide-react'
+import { BookOpen, Clapperboard, Handshake, LayoutDashboard, Settings, Sparkles, Users } from 'lucide-react'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -12,6 +12,8 @@ const NAV_LINKS = [
     { icon: Clapperboard, labelKey: 'nav.anime', to: '/anime' },
     { icon: BookOpen, labelKey: 'nav.manga', to: '/manga' },
     { icon: Users, labelKey: 'nav.friends', to: '/friends' },
+    { icon: Handshake, labelKey: 'nav.agreement', to: '/agreement' },
+    { icon: Sparkles, labelKey: 'nav.stats', to: '/stats' },
     { icon: Settings, labelKey: 'nav.settings', to: '/settings' },
 ] as const
 

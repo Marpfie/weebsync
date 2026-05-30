@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { FriendInfo, Recommendation } from '../lib/recommendations'
+import type { FriendInfo, FriendRating, Recommendation, UserMediaEntry } from '../lib/recommendations'
 
 /**
  * In-memory snapshot of the orchestrator's output. Derived data only.
@@ -18,6 +18,10 @@ export interface FriendRatingCount {
 
 export interface RecommendationsState {
     anime: Recommendation[]
+    /** Raw friend ratings stream for anime, used by insight pages. */
+    animeFriendRatings: readonly FriendRating[]
+    /** The user's own anime list, used by insight pages. */
+    animeUserEntries: readonly UserMediaEntry[]
     /**
      * Friends whose latest fetch failed (e.g. AniList HTTP 500). Stored per
      * media type so the UI can surface a retry affordance. Their previous
@@ -40,6 +44,10 @@ export interface RecommendationsState {
     isSyncing: boolean
     lastSyncedAt: null | number
     manga: Recommendation[]
+    /** Raw friend ratings stream for manga, used by insight pages. */
+    mangaFriendRatings: readonly FriendRating[]
+    /** The user's own manga list, used by insight pages. */
+    mangaUserEntries: readonly UserMediaEntry[]
     /**
      * Triggers a fresh sync. Mounted by `useRecommendationSync`; null until
      * the orchestrator hook is alive. UI should hide / disable resync controls
@@ -53,6 +61,8 @@ export interface RecommendationsState {
 
 const initialState: RecommendationsState = {
     anime: [],
+    animeFriendRatings: [],
+    animeUserEntries: [],
     failedFriendIds: { anime: [], manga: [] },
     following: [],
     friendProgress: {
@@ -65,6 +75,8 @@ const initialState: RecommendationsState = {
     isSyncing: false,
     lastSyncedAt: null,
     manga: [],
+    mangaFriendRatings: [],
+    mangaUserEntries: [],
     resync: null,
     retryFailed: null,
     userId: null,
