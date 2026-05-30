@@ -7,7 +7,6 @@ import type { UserMediaListsQuery } from '../gql/graphql'
 import { UserMediaListsDocument } from '../gql/graphql'
 import { enqueue, PRIORITY } from '../lib/rate-limiter'
 import { buildRecommendations, type FriendInfo, type UserMediaEntry } from '../lib/recommendations'
-import { clearCache } from '../store/friendCache'
 import { useIdentity } from '../store/identity'
 import { recordSync, usePreferences } from '../store/preferences'
 import { resetRecommendations, useRecommendationsStore } from '../store/recommendationsStore'
@@ -258,10 +257,12 @@ export const useRecommendationSync = (enabled = true): void => {
     }, [animeFriendLists.data, mangaFriendLists.data])
 
     const resync = useCallback(() => {
-        if (userId) {
-            void clearCache(userId)
-            void clearUserListCache(userId)
-        }
+        // Per-friend caches are intentionally not cleared here — the syncKey
+        // bump forces a network-only refetch which overwrites them, and other
+        // viewers on this device may still benefit from the existing snapshots
+        // if our refetch fails part-way. Only the viewer-scoped own-list
+        // cache gets purged.
+        if (userId) void clearUserListCache(userId)
         setIsSyncing(true)
         setSyncKey((k) => k + 1)
     }, [userId])

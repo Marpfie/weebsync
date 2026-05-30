@@ -5,7 +5,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FriendMediaListsQuery, MediaType } from '../gql/graphql'
 import { FriendMediaListsDocument } from '../gql/graphql'
 import { enqueue, PRIORITY } from '../lib/rate-limiter'
-import { type FriendCacheEntry, isCacheFresh, loadCache, saveCache } from '../store/friendCache'
+import {
+    type FriendCacheEntry,
+    isCacheFresh,
+    loadFriendListCache,
+    loadFriendListCaches,
+    saveFriendListCache,
+} from '../store/friendCache'
 
 export interface UseFriendListsResult extends FriendListsState {
     /** Re-fetch only the given friend ids (used by the failure-retry affordance). */
@@ -67,14 +73,15 @@ const isServerFailure = (error: unknown): boolean => {
 
 /**
  * Fetches every friend's media list, serially through the rate limiter,
- * persisting the combined result to a 24h localStorage cache.
+ * persisting each friend's response as its own IndexedDB entry so the cache
+ * survives across viewers and accounts.
  *
- * - `syncKey > 0` forces a network re-fetch (used by the manual resync button).
- * - When the cache is fresh and not being forced, the hook returns the cached
- *   slice immediately and skips the network entirely.
- * - Failed fetches (HTTP 5xx) are tracked in `failedIds`; their previous cache
- *   entries are preserved so stale data still feeds recommendations. The
- *   returned `retry()` re-fetches a specific subset surgically.
+ * - `syncKey > 0` forces a network re-fetch for every friend (manual resync).
+ * - Friends with a fresh per-friend cache are surfaced immediately and the
+ *   network is hit only for the rest, in sequence through the rate limiter.
+ * - Failed fetches (HTTP 5xx) are tracked in `failedIds`; their previous
+ *   per-friend cache (if any) is preserved so stale data still feeds
+ *   recommendations. `retry()` re-fetches a specific subset surgically.
  */
 export const useFriendLists = (
     friendIds: number[],
@@ -100,62 +107,34 @@ export const useFriendLists = (
 
         let cancelled = false
 
-        const fetchAll = async (cached: Awaited<ReturnType<typeof loadCache>>) => {
-            const aggregated: FriendCacheEntry[] = []
-            const failed: number[] = []
-
-            for (const [index, friendId] of friendIds.entries()) {
-                if (cancelled) return
-                try {
-                    const result = await enqueue(
-                        () =>
-                            client.query<FriendMediaListsQuery>({
-                                fetchPolicy: syncKey > 0 ? 'network-only' : 'cache-first',
-                                query: FriendMediaListsDocument,
-                                variables: { type, userId: friendId },
-                            }),
-                        priorityForType(type)
-                    )
-                    aggregated.push(...extractFriendEntries(result.data, friendId, type))
-                } catch (error) {
-                    if (isServerFailure(error)) {
-                        failed.push(friendId)
-                        console.warn(`[useFriendLists] ${type} fetch failed for friend ${friendId}:`, error)
-                    }
-                }
-                setState((previous) => ({
-                    ...previous,
-                    data: [...aggregated],
-                    failedIds: [...failed],
-                    progress: index + 1,
-                }))
-            }
-
-            if (cancelled) return
-
-            // Preserve previous cache entries for friends whose fetch failed so
-            // stale data still flows into recommendations rather than vanishing.
-            if (cached && failed.length > 0) {
-                const failedSet = new Set(failed)
-                for (const entry of cached.entries) {
-                    if (failedSet.has(entry.friendId)) aggregated.push(entry)
-                }
-            }
-
-            void saveCache(userId, type, aggregated)
-            setState((previous) => ({ ...previous, data: aggregated, loading: false }))
-        }
-
         const run = async () => {
-            const cached = await loadCache(userId, type)
+            const cachedByFriend = await loadFriendListCaches(friendIds, type)
             if (cancelled) return
 
-            if (syncKey === 0 && cached && isCacheFresh(cached.cachedAt)) {
-                console.debug(
-                    `[useFriendLists] ${type} cache hit (age ${Math.round((Date.now() - cached.cachedAt) / 1000)}s, ${cached.entries.length} entries)`
-                )
+            const force = syncKey > 0
+            const isFresh = (id: number) => {
+                const cached = cachedByFriend.get(id)
+                return !!cached && !force && isCacheFresh(cached.cachedAt)
+            }
+
+            // Aggregate fresh-cached entries up-front so they're already on
+            // screen while we fetch the stale ones.
+            const aggregated: FriendCacheEntry[] = []
+            for (const id of friendIds) {
+                const cached = cachedByFriend.get(id)
+                if (cached && isFresh(id)) aggregated.push(...cached.entries)
+            }
+
+            const toFetch = friendIds.filter((id) => !isFresh(id))
+            const cachedCount = friendIds.length - toFetch.length
+
+            console.debug(
+                `[useFriendLists] ${type} ${cachedCount}/${friendIds.length} cached fresh, fetching ${toFetch.length} (force=${force})`
+            )
+
+            if (toFetch.length === 0) {
                 setState({
-                    data: cached.entries,
+                    data: aggregated,
                     error: null,
                     failedIds: [],
                     loading: false,
@@ -164,12 +143,55 @@ export const useFriendLists = (
                 })
                 return
             }
-            console.debug(
-                `[useFriendLists] ${type} cache MISS — syncKey=${syncKey}, hasCache=${!!cached}, fresh=${cached ? isCacheFresh(cached.cachedAt) : 'n/a'}`
-            )
 
-            setState({ data: [], error: null, failedIds: [], loading: true, progress: 0, total: friendIds.length })
-            await fetchAll(cached)
+            setState({
+                data: aggregated,
+                error: null,
+                failedIds: [],
+                loading: true,
+                progress: cachedCount,
+                total: friendIds.length,
+            })
+
+            const failed: number[] = []
+            let progress = cachedCount
+
+            for (const friendId of toFetch) {
+                if (cancelled) return
+                try {
+                    const result = await enqueue(
+                        () =>
+                            client.query<FriendMediaListsQuery>({
+                                fetchPolicy: force ? 'network-only' : 'cache-first',
+                                query: FriendMediaListsDocument,
+                                variables: { type, userId: friendId },
+                            }),
+                        priorityForType(type)
+                    )
+                    const entries = extractFriendEntries(result.data, friendId, type)
+                    aggregated.push(...entries)
+                    void saveFriendListCache(friendId, type, entries)
+                } catch (error) {
+                    if (isServerFailure(error)) {
+                        failed.push(friendId)
+                        // Preserve stale snapshot for this friend so the
+                        // aggregate doesn't suddenly shrink.
+                        const stale = cachedByFriend.get(friendId)
+                        if (stale) aggregated.push(...stale.entries)
+                        console.warn(`[useFriendLists] ${type} fetch failed for friend ${friendId}:`, error)
+                    }
+                }
+                progress++
+                setState((previous) => ({
+                    ...previous,
+                    data: [...aggregated],
+                    failedIds: [...failed],
+                    progress,
+                }))
+            }
+
+            if (cancelled) return
+            setState((previous) => ({ ...previous, data: aggregated, loading: false }))
         }
 
         void run()
@@ -190,7 +212,7 @@ export const useFriendLists = (
 
         const run = async () => {
             const stillFailed: number[] = []
-            const freshEntries: FriendCacheEntry[] = []
+            const refreshedByFriend = new Map<number, FriendCacheEntry[]>()
 
             for (const friendId of targetIds) {
                 if (cancelled) return
@@ -204,11 +226,16 @@ export const useFriendLists = (
                             }),
                         priorityForType(type)
                     )
-                    freshEntries.push(...extractFriendEntries(result.data, friendId, type))
+                    const entries = extractFriendEntries(result.data, friendId, type)
+                    refreshedByFriend.set(friendId, entries)
+                    void saveFriendListCache(friendId, type, entries)
                 } catch (error) {
                     if (isServerFailure(error)) {
                         stillFailed.push(friendId)
                         console.warn(`[useFriendLists] retry failed for friend ${friendId}:`, error)
+                        // Carry stale cache forward if we still have it.
+                        const stale = await loadFriendListCache(friendId, type)
+                        if (stale) refreshedByFriend.set(friendId, stale.entries)
                     }
                 }
             }
@@ -220,8 +247,7 @@ export const useFriendLists = (
                 // Drop stale entries for friends we just refetched (success or
                 // still-failed) and merge the fresh entries in.
                 const carried = previous.data.filter((entry) => !retried.has(entry.friendId))
-                const merged = [...carried, ...freshEntries]
-                void saveCache(userId, type, merged)
+                const merged = [...carried, ...[...refreshedByFriend.values()].flat()]
                 return {
                     ...previous,
                     data: merged,

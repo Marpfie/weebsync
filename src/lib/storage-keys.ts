@@ -9,8 +9,15 @@
  */
 
 export const STORAGE_KEYS = {
-    /** Per-friend (userId, mediaType) media-list cache. Keyed `weebsync_fcache_<userId>_<type>`. */
-    FRIEND_CACHE_PREFIX: 'weebsync_fcache_',
+    /** Per-friend (friendId, mediaType) media-list cache. Keyed `weebsync_friend_<friendId>_<type>`.
+     *  Global across viewers — anyone who follows the same friend reuses the entry. */
+    FRIEND_CACHE_PREFIX: 'weebsync_friend_',
+    /**
+     * Legacy per-viewer friend cache prefix. Pre-IDB-migration and pre-per-friend
+     * refactor entries lived here, both in localStorage and (briefly) in IDB.
+     * Kept around so `sweepStaleCaches` can reclaim them on upgrade.
+     */
+    FRIEND_CACHE_PREFIX_LEGACY: 'weebsync_fcache_',
     /** Current identity (guest or authed). Single entry. */
     IDENTITY: 'weebsync_identity',
     /** User preferences (filters, sync toggles, exclusions). Single entry. */

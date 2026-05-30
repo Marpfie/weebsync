@@ -19,7 +19,11 @@ interface MaybePayload {
 }
 
 const isCacheKey = (key: string) =>
-    key.startsWith(STORAGE_KEYS.FRIEND_CACHE_PREFIX) || key.startsWith(STORAGE_KEYS.USER_LIST_CACHE_PREFIX)
+    key.startsWith(STORAGE_KEYS.FRIEND_CACHE_PREFIX) ||
+    key.startsWith(STORAGE_KEYS.FRIEND_CACHE_PREFIX_LEGACY) ||
+    key.startsWith(STORAGE_KEYS.USER_LIST_CACHE_PREFIX)
+
+const isLegacyKey = (key: string) => key.startsWith(STORAGE_KEYS.FRIEND_CACHE_PREFIX_LEGACY)
 
 const sweepLocalStorage = (now: number): void => {
     try {
@@ -56,6 +60,12 @@ const sweepIdb = async (now: number): Promise<void> => {
         all
             .filter((key) => isCacheKey(key))
             .map(async (key) => {
+                // Legacy per-viewer aggregate snapshots are obsolete regardless
+                // of age — the new per-friend cache supersedes them entirely.
+                if (isLegacyKey(key)) {
+                    await idbDelete(key)
+                    return
+                }
                 const payload = await idbGet<MaybePayload>(key)
                 if (!payload || typeof payload.cachedAt !== 'number' || now - payload.cachedAt >= CACHE_TTL_MS) {
                     await idbDelete(key)
