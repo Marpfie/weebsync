@@ -1,11 +1,4 @@
 - Search bar in anime/manga pages
-- Rethink media recs page layout:
-    - Replace separate "Backlog" / "New discoveries" sections + "Backlog only" checkbox with a single unified list
-    - Add a "Status" filter dropdown: All / Backlog only / New only (i.e. not in any of your lists)
-    - Page size should be divisible by 3 (cards are in a 3-col grid) so partial rows don't appear at the bottom
-- double Bayesian rating?
-    - series with many friends who watched should gain a boost over those that dont
-    - secondary rating with anilist score (non friend)
 - authenticated users get extra actions: add/remove from Plan to Watch directly from recommendation cards
 - language options
     - new languages with i18n
@@ -13,16 +6,14 @@
     - ranking based on anime favorites
     - less useful but could be interesting: ranking based on favorite characters -> related shows
         - similarly other favorite types like staff or studio
-- rate how much you agree with your friends
-    - a separate page that gives you an overview of your overlap with other people. this could be used as an indication for who to include in friend ratings. or possibly even for weights later
-    - a view for highest disagreements individually and for the lists overall, not for anything serious but as a little tool for friendly headbutting
-- "biggest hipsters and haters" for lack of better word page
-    - user can look into some fun and possibly useful stats for their friends
-        - like if a user is very confirming with overall anilist opinion
-        - if a user often goes against the grain and either rates things a lot higher or lower than most people
-        - browsing their anime ratings for highest deviations with an individual viewer to flip through anime individually
+- a view for highest disagreements individually and for the lists overall, not for anything serious but as a little tool for friendly headbutting (extension of /agreement)
+- /stats drill-down: browse an individual friend's anime ratings sorted by deviation from AniList mean, for flipping through their hipster/hater picks one at a time
 - auto-threshold: auto-exclude friends when their rating count falls below a configurable minimum
     - the rating count range filter on the friends page likely covers this adequately
 - the display/order between /anime and "Top Anime Recommendations" in dashboard is not the same. that makes no sense as its supposed to be the same data?
 - add "unfollow" mutation support to friends page if authenticated
 - use tooltip component consistently instead of base html (see for example the scores on the media cards - as long as this doesnt go against principles for a11y)
+- new recommendation mode "Hidden Gems"
+    - rewards series where friend scores are high but the AniList community averageScore is low
+    - actively surfaces under-recognized titles your friends loved
+    - implementation sketch: score ~ friend_avg - alpha * anilist_avg (or boost rec when gap > threshold), require minimum friend ratings to avoid noise
