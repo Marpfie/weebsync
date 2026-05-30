@@ -32,11 +32,17 @@ export const loadCache = (userId: number, type: MediaType): CachePayload | undef
 }
 
 export const saveCache = (userId: number, type: MediaType, entries: FriendCacheEntry[]): void => {
+    const payload: CachePayload = { cachedAt: Date.now(), entries }
+    const json = JSON.stringify(payload)
     try {
-        const payload: CachePayload = { cachedAt: Date.now(), entries }
-        localStorage.setItem(cacheKey(userId, type), JSON.stringify(payload))
-    } catch {
+        localStorage.setItem(cacheKey(userId, type), json)
+        console.debug(`[friendCache] saved ${type} (${entries.length} entries, ${Math.round(json.length / 1024)}KB)`)
+    } catch (error) {
         // Quota exceeded — degrade gracefully, the in-memory state still works.
+        console.warn(
+            `[friendCache] FAILED to save ${type} cache (${entries.length} entries, ${Math.round(json.length / 1024)}KB):`,
+            error
+        )
     }
 }
 

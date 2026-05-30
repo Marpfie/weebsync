@@ -1,24 +1,33 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ExternalLink, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronsUpDown, ChevronUp, ExternalLink, Sparkles, UserRound } from 'lucide-react'
 import { type FC, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar'
-import { Badge } from '../components/ui/badge'
 import { Card } from '../components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../components/ui/empty'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { useFriendInsightsData } from '../hooks/useFriendInsightsData'
-import { computePersonalityByFriend, toAniListMeanMap } from '../lib/insights/stats'
+import { computePersonality, computePersonalityByFriend, toAniListMeanMap } from '../lib/insights/stats'
 import type { FriendRating, MediaType } from '../lib/recommendations'
 import { requireIdentity } from '../lib/route-guards'
 import { cn } from '../lib/utils'
+import { useIdentity } from '../store/identity'
 import { useRecommendationsStore } from '../store/recommendationsStore'
 
+type SortDir = 'asc' | 'desc'
 type SortKey = 'bias' | 'conformity' | 'hater' | 'hipster' | 'sample'
 
-const fmt = (n: null | number, sign = false): string => {
+const DEFAULT_DIR: Record<SortKey, SortDir> = {
+    bias: 'desc',
+    conformity: 'asc',
+    hater: 'desc',
+    hipster: 'desc',
+    sample: 'desc',
+}
+
+const formatScore = (n: null | number, sign = false): string => {
     if (n == null) return '—'
     const rounded = Math.round(n * 100) / 100
     if (!sign) return rounded.toFixed(2)
@@ -36,10 +45,31 @@ const biasTone = (n: null | number): string => {
 const StatsTable: FC<{ mediaType: MediaType }> = ({ mediaType }) => {
     const { t } = useTranslation()
     const data = useFriendInsightsData()
+    const identity = useIdentity()
     const following = useRecommendationsStore((s) => s.following)
     const [sortKey, setSortKey] = useState<SortKey>('hipster')
+    const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_DIR.hipster)
+
+    const handleSort = (key: SortKey) => {
+        if (key === sortKey) {
+            setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+        } else {
+            setSortKey(key)
+            setSortDir(DEFAULT_DIR[key])
+        }
+    }
 
     const ratings: readonly FriendRating[] = mediaType === 'ANIME' ? data.animeRatings : data.mangaRatings
+    const userEntries = mediaType === 'ANIME' ? data.animeUserEntries : data.mangaUserEntries
+
+    const userStats = useMemo(() => {
+        if (userEntries.length === 0) return null
+        const anilistMeans = toAniListMeanMap(userEntries)
+        return computePersonality(
+            userEntries.map((e) => ({ mediaId: e.mediaId, score: e.score ?? 0 })),
+            anilistMeans
+        )
+    }, [userEntries])
 
     const rows = useMemo(() => {
         const anilistMeans = toAniListMeanMap(ratings)
@@ -51,27 +81,29 @@ const StatsTable: FC<{ mediaType: MediaType }> = ({ mediaType }) => {
             stats,
         })).filter((row) => row.friend !== undefined && row.stats.sampleSize >= 5)
 
-        const cmp = (a: (typeof decorated)[number], b: (typeof decorated)[number]): number => {
+        const ascCmp = (a: (typeof decorated)[number], b: (typeof decorated)[number]): number => {
             switch (sortKey) {
                 case 'bias': {
-                    return Math.abs(b.stats.contrarianBias ?? 0) - Math.abs(a.stats.contrarianBias ?? 0)
+                    return (a.stats.contrarianBias ?? 0) - (b.stats.contrarianBias ?? 0)
                 }
                 case 'conformity': {
                     return (a.stats.conformity ?? Infinity) - (b.stats.conformity ?? Infinity)
                 }
                 case 'hater': {
-                    return Math.abs(b.stats.hater ?? 0) - Math.abs(a.stats.hater ?? 0)
+                    return (a.stats.hater ?? 0) - (b.stats.hater ?? 0)
                 }
                 case 'sample': {
-                    return b.stats.sampleSize - a.stats.sampleSize
+                    return a.stats.sampleSize - b.stats.sampleSize
                 }
                 default: {
-                    return (b.stats.hipster ?? -Infinity) - (a.stats.hipster ?? -Infinity)
+                    return (a.stats.hipster ?? -Infinity) - (b.stats.hipster ?? -Infinity)
                 }
             }
         }
+        const cmp =
+            sortDir === 'asc' ? ascCmp : (a: (typeof decorated)[number], b: (typeof decorated)[number]) => -ascCmp(a, b)
         return decorated.toSorted(cmp)
-    }, [ratings, following, sortKey])
+    }, [ratings, following, sortKey, sortDir])
 
     if (ratings.length === 0 || rows.length === 0) {
         return (
@@ -87,20 +119,26 @@ const StatsTable: FC<{ mediaType: MediaType }> = ({ mediaType }) => {
         )
     }
 
-    const headerButton = (label: string, key: SortKey): React.ReactNode => (
-        <button
-            className={cn(
-                'inline-flex items-center gap-1 hover:text-foreground transition-colors',
-                sortKey === key ? 'text-foreground font-semibold' : 'text-muted-foreground'
-            )}
-            onClick={() => {
-                setSortKey(key)
-            }}
-            type="button"
-        >
-            {label}
-        </button>
-    )
+    const headerButton = (label: string, key: SortKey): React.ReactNode => {
+        const active = sortKey === key
+        const Icon = active ? (sortDir === 'asc' ? ChevronUp : ChevronDown) : ChevronsUpDown
+        return (
+            <button
+                aria-label={t('stats.sortAriaLabel', { column: label })}
+                className={cn(
+                    'inline-flex items-center gap-1 hover:text-foreground transition-colors',
+                    active ? 'text-foreground font-semibold' : 'text-muted-foreground'
+                )}
+                onClick={() => {
+                    handleSort(key)
+                }}
+                type="button"
+            >
+                {label}
+                <Icon aria-hidden="true" className={cn('size-3', !active && 'opacity-40')} />
+            </button>
+        )
+    }
 
     return (
         <Card className="p-0 overflow-hidden" size="sm">
@@ -124,6 +162,53 @@ const StatsTable: FC<{ mediaType: MediaType }> = ({ mediaType }) => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
+                    {identity && userStats && (
+                        <TableRow className="bg-muted/40">
+                            <TableCell>
+                                <a
+                                    className="inline-flex items-center gap-2 hover:underline"
+                                    href={`https://anilist.co/user/${encodeURIComponent(identity.name)}/`}
+                                    rel="noreferrer"
+                                    target="_blank"
+                                >
+                                    <Avatar className="size-7">
+                                        <AvatarImage alt="" src={identity.avatarUrl ?? undefined} />
+                                        <AvatarFallback>
+                                            <UserRound aria-hidden="true" className="size-4" />
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium">{identity.name}</span>
+                                    <ExternalLink aria-hidden="true" className="size-3 text-muted-foreground" />
+                                </a>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-muted-foreground">
+                                {userStats.sampleSize < 5 ? (
+                                    <span className="text-xs text-muted-foreground/60">{t('stats.tooFewRatings')}</span>
+                                ) : (
+                                    userStats.sampleSize
+                                )}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-emerald-700/80 dark:text-emerald-400">
+                                {userStats.sampleSize >= 5 ? formatScore(userStats.hipster, true) : '—'}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-rose-700/80 dark:text-rose-400">
+                                {userStats.sampleSize >= 5 ? formatScore(userStats.hater, true) : '—'}
+                            </TableCell>
+                            <TableCell
+                                className={cn(
+                                    'text-right tabular-nums',
+                                    userStats.sampleSize >= 5
+                                        ? biasTone(userStats.contrarianBias)
+                                        : 'text-muted-foreground'
+                                )}
+                            >
+                                {userStats.sampleSize >= 5 ? formatScore(userStats.contrarianBias, true) : '—'}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                                {userStats.sampleSize >= 5 ? formatScore(userStats.conformity) : '—'}
+                            </TableCell>
+                        </TableRow>
+                    )}
                     {rows.map(({ friend, friendId, stats }) => {
                         if (!friend) return null
                         const f = friend
@@ -149,15 +234,17 @@ const StatsTable: FC<{ mediaType: MediaType }> = ({ mediaType }) => {
                                     {stats.sampleSize}
                                 </TableCell>
                                 <TableCell className="text-right tabular-nums text-emerald-700/80 dark:text-emerald-400">
-                                    {fmt(stats.hipster, true)}
+                                    {formatScore(stats.hipster, true)}
                                 </TableCell>
                                 <TableCell className="text-right tabular-nums text-rose-700/80 dark:text-rose-400">
-                                    {fmt(stats.hater, true)}
+                                    {formatScore(stats.hater, true)}
                                 </TableCell>
                                 <TableCell className={cn('text-right tabular-nums', biasTone(stats.contrarianBias))}>
-                                    {fmt(stats.contrarianBias, true)}
+                                    {formatScore(stats.contrarianBias, true)}
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{fmt(stats.conformity)}</TableCell>
+                                <TableCell className="text-right tabular-nums">
+                                    {formatScore(stats.conformity)}
+                                </TableCell>
                             </TableRow>
                         )
                     })}
@@ -178,11 +265,23 @@ const StatsPage = () => {
                 <p className="text-sm mt-0.5 text-muted-foreground">{t('stats.subtitle')}</p>
             </div>
 
-            <div className="flex flex-wrap gap-2 text-xs">
-                <Badge variant="secondary">{t('stats.hipsterDescription')}</Badge>
-                <Badge variant="secondary">{t('stats.haterDescription')}</Badge>
-                <Badge variant="secondary">{t('stats.conformistDescription')}</Badge>
-            </div>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                {(
+                    [
+                        ['hipsterTerm', 'hipsterDesc'],
+                        ['haterTerm', 'haterDesc'],
+                        ['biasTerm', 'biasDesc'],
+                        ['conformityTerm', 'conformityDesc'],
+                    ] as const
+                ).map(([termKey, descKey]) => (
+                    <div className="flex gap-2" key={termKey}>
+                        <dt className="font-medium text-foreground shrink-0 min-w-[5.5rem]">
+                            {t(`stats.legend.${termKey}`)}
+                        </dt>
+                        <dd className="text-muted-foreground">{t(`stats.legend.${descKey}`)}</dd>
+                    </div>
+                ))}
+            </dl>
 
             <Tabs
                 onValueChange={(v) => {

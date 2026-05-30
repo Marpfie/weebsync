@@ -16,4 +16,9 @@
 - new recommendation mode "Hidden Gems"
     - rewards series where friend scores are high but the AniList community averageScore is low
     - actively surfaces under-recognized titles your friends loved
-    - implementation sketch: score ~ friend_avg - alpha * anilist_avg (or boost rec when gap > threshold), require minimum friend ratings to avoid noise
+    - implementation sketch: score ~ friend_avg - alpha \* anilist_avg (or boost rec when gap > threshold), require minimum friend ratings to avoid noise
+- /agreement and /stats: name/text filter input above the table to narrow long friend lists
+- /agreement and /stats: configurable minimum-sample slider (currently hardcoded to 3 / 5) so users can tighten or relax noise threshold
+- /agreement and /stats: per-row sparkline showing the friend's score distribution (10-bin histogram) for quick gestalt of rating style
+- /stats summary header: median bias / median conformity across friends so users have a frame of reference for individual rows
+- friend-list cache: if quota becomes a real issue, switch to IndexedDB (no 5MB cap) or prune fields we don't need on recommendation pages
