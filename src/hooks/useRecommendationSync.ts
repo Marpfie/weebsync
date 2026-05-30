@@ -24,7 +24,7 @@ import { toUserEntries } from './useUserEntries'
  * Disabled formats (`prefs.syncAnime/syncManga`) short-circuit to an empty
  * `friendIds[]`, so no network work happens for them at all.
  */
-export const useRecommendationSync = (): void => {
+export const useRecommendationSync = (enabled = true): void => {
     const identity = useIdentity()
     const prefs = usePreferences()
     const client = useApolloClient()
@@ -32,7 +32,7 @@ export const useRecommendationSync = (): void => {
     const [syncKey, setSyncKey] = useState(0)
     const [isSyncing, setIsSyncing] = useState(false)
 
-    const userId = identity?.userId
+    const userId = enabled ? identity?.userId : undefined
 
     // Apollo cache is shared across users (single persisted blob). Whenever the
     // logged-in user actually changes, wipe normalized data so a previous

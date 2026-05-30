@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -9,7 +9,8 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { useAuth } from '../hooks/useAuth'
 import { useUserByName } from '../hooks/useUserByName'
-import { setGuestIdentity } from '../store/identity'
+import { getToken } from '../lib/anilist-auth'
+import { getIdentity, setGuestIdentity } from '../store/identity'
 
 /** Debounce ms before firing the AniList username lookup. */
 const LOOKUP_DEBOUNCE_MS = 600
@@ -158,4 +159,13 @@ const LandingPage = () => {
     )
 }
 
-export const Route = createFileRoute('/')({ component: LandingPage })
+export const Route = createFileRoute('/')({
+    beforeLoad: () => {
+        // If a session already exists, skip the landing page entirely.
+        if (getIdentity() || getToken()) {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error
+            throw redirect({ to: '/dashboard' })
+        }
+    },
+    component: LandingPage,
+})

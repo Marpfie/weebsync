@@ -25,7 +25,11 @@ export const RootLayout: FC = () => {
     const showAppShell = identity != null && !isOAuthCallback && !isLandingPage
 
     useViewer()
-    useRecommendationSync()
+    // Don't kick off recommendation work on the landing page or during the
+    // OAuth callback — there's no UI to consume it there, and on logged-in
+    // visits to `/` the redirect in beforeLoad means this only matters on the
+    // rare moment between mount and redirect.
+    useRecommendationSync(showAppShell)
 
     // Whenever identity disappears, cancel any in-flight queries (so friend-list
     // fetches don't keep burning rate-limit calls) and bounce back to landing.
