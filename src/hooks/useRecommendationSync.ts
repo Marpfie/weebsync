@@ -149,15 +149,26 @@ export const useRecommendationSync = (enabled = true): void => {
     // any true→false transition of `isLoadingFriends`. Fires on manual
     // resync, on toggling syncAnime/syncManga (which kicks off a fetch for
     // the newly-enabled type) and on initial fetch when cache was missing.
+    //
+    // Toast policy: only surface a toast when the user actively initiated
+    // the sync (`isSyncing === true`). Implicit background fetches (cold
+    // cache, format toggle) update `lastSyncedAt` silently — popping a
+    // "Friends resynced" toast on every fresh page load would be noise.
     const wasLoadingFriendsRef = useRef(false)
+    const wasSyncingRef = useRef(false)
     useEffect(() => {
+        if (isSyncing) wasSyncingRef.current = true
         const settling = wasLoadingFriendsRef.current && !isLoadingFriends
         wasLoadingFriendsRef.current = isLoadingFriends
         if (!settling) return
 
         recordSync(Date.now())
+        const wasManual = wasSyncingRef.current
+        wasSyncingRef.current = false
         // Reset the manual-sync flag so the header spinner can stop.
         setIsSyncing(false)
+
+        if (!wasManual) return
 
         const failedCount = animeFriendLists.failedIds.length + mangaFriendLists.failedIds.length
         if (failedCount > 0) {
@@ -165,7 +176,7 @@ export const useRecommendationSync = (enabled = true): void => {
         } else {
             toast.success(t('sync.completeToast'))
         }
-    }, [isLoadingFriends, animeFriendLists.failedIds.length, mangaFriendLists.failedIds.length, t])
+    }, [isLoadingFriends, isSyncing, animeFriendLists.failedIds.length, mangaFriendLists.failedIds.length, t])
 
     // Build the actual recommendation lists.
     const anime = useMemo(
