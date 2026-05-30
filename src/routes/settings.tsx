@@ -1,10 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { HelpCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Checkbox } from '../components/ui/checkbox'
 import { Label } from '../components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Switch } from '../components/ui/switch'
 import { useAuth } from '../hooks/useAuth'
@@ -22,18 +24,57 @@ const ADDITIONAL_STATUSES = ['PAUSED', 'DROPPED', 'REPEATING'] as const
 interface SettingRowProps {
     children: React.ReactNode
     description: string
-    title: string
+    title: React.ReactNode
 }
 
 const SettingRow: React.FC<SettingRowProps> = ({ children, description, title }) => (
     <div className="flex items-center justify-between gap-4 py-3">
-        <div>
-            <p className="text-sm font-medium">{title}</p>
+        <div className="min-w-0">
+            <div className="text-sm font-medium flex items-center gap-1.5">{title}</div>
             <p className="text-xs text-muted-foreground">{description}</p>
         </div>
         {children}
     </div>
 )
+
+const RecModeHelp: React.FC = () => {
+    const { t } = useTranslation()
+    return (
+        <Popover>
+            <PopoverTrigger
+                render={
+                    <Button
+                        aria-label={t('settings.recModeHelpAria')}
+                        className="size-5 rounded-full text-muted-foreground"
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                    >
+                        <HelpCircle aria-hidden="true" className="size-4" />
+                    </Button>
+                }
+            />
+            <PopoverContent align="start" className="w-80 text-sm">
+                <p className="font-semibold">{t('settings.recModeHelp')}</p>
+                <p className="text-muted-foreground text-xs">{t('settings.recModeHelpIntro')}</p>
+                <div className="space-y-2 pt-1">
+                    <div>
+                        <p className="font-medium">{t('settings.recModeHelpFriendFavouritesTitle')}</p>
+                        <p className="text-muted-foreground text-xs">{t('settings.recModeHelpFriendFavouritesBody')}</p>
+                    </div>
+                    <div>
+                        <p className="font-medium">{t('settings.recModeHelpMostAgreedTitle')}</p>
+                        <p className="text-muted-foreground text-xs">{t('settings.recModeHelpMostAgreedBody')}</p>
+                    </div>
+                    <div>
+                        <p className="font-medium">{t('settings.recModeHelpFriendsOnlyTitle')}</p>
+                        <p className="text-muted-foreground text-xs">{t('settings.recModeHelpFriendsOnlyBody')}</p>
+                    </div>
+                </div>
+            </PopoverContent>
+        </Popover>
+    )
+}
 
 const SettingsPage = () => {
     const { t } = useTranslation()
@@ -57,7 +98,15 @@ const SettingsPage = () => {
                     <CardTitle>{t('settings.recSection')}</CardTitle>
                 </CardHeader>
                 <CardContent className="divide-y divide-border">
-                    <SettingRow description={t('settings.recModeDesc')} title={t('settings.recMode')}>
+                    <SettingRow
+                        description={t('settings.recModeDesc')}
+                        title={
+                            <>
+                                {t('settings.recMode')}
+                                <RecModeHelp />
+                            </>
+                        }
+                    >
                         <Select
                             onValueChange={(value) => {
                                 updatePreference('recommendationMode', value as Preferences['recommendationMode'])
