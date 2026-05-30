@@ -16,7 +16,7 @@ export type ScoringStrategy = (context: ScoreContext) => number
 
 /** Bayesian blend of AniList score and friend scores. Best general-purpose ranking. */
 const friendFavourites: ScoringStrategy = ({ aggregate, anilistScore, config }) => {
-    const anilistMean = (anilistScore ?? 75) / 10
+    const anilistMean = (anilistScore ?? config.neutralPriorMean * 10) / 10
     const friendScoreSum = sum(aggregate.normalisedScores)
     const friendCount = aggregate.dedupedRatings.length
     return (config.anilistPriorWeight * anilistMean + friendScoreSum) / (config.anilistPriorWeight + friendCount)

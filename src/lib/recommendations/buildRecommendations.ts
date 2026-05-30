@@ -104,5 +104,37 @@ export const buildRecommendations = (
         })
     }
 
-    return out.toSorted((a, b) => b.score - a.score)
+    return applyGlobalWatchShrinkage(out, config).toSorted((a, b) => b.score - a.score)
+}
+
+/**
+ * Second-stage Bayesian shrinkage: pulls each per-item base score toward the
+ * global mean across all recs, using each item's watcher count as its "votes".
+ *
+ * Items watched by many friends keep their stage-1 score; items watched by few
+ * friends are shrunk toward the global mean. This discounts niche picks where
+ * the friend signal is thin, even if those few friends rated highly.
+ *
+ * The global mean is itself watch-weighted, so a popular series at 7.5 dominates
+ * the prior more than an unwatched series at 9. Pure function over `out`.
+ */
+const applyGlobalWatchShrinkage = (out: Recommendation[], config: ScoringConfig): Recommendation[] => {
+    if (out.length === 0) return out
+
+    let weightedScoreSum = 0
+    let weightSum = 0
+    for (const rec of out) {
+        const w = rec.watchCount
+        if (w <= 0) continue
+        weightedScoreSum += rec.score * w
+        weightSum += w
+    }
+    const globalMean = weightSum > 0 ? weightedScoreSum / weightSum : config.neutralPriorMean
+
+    const W = config.watchCountPriorWeight
+    for (const rec of out) {
+        const w = rec.watchCount
+        rec.score = (W * globalMean + w * rec.score) / (W + w)
+    }
+    return out
 }

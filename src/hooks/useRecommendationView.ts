@@ -51,6 +51,7 @@ export const useRecommendationView = (
             const isBacklog = r.isInPlanList || r.isAlreadyStarted
             if (statusFilter === 'backlog' && !isBacklog) return false
             if (statusFilter === 'new' && isBacklog) return false
+
             if (formatSet) {
                 const key = deriveFormatKey(r)
                 if (!key || !formatSet.has(key)) return false

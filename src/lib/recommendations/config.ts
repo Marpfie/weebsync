@@ -12,8 +12,15 @@ export interface ScoringConfig {
     friendsOnlyPriorWeight: number
     /** Minimum friend score that counts toward the rated average (0–10 scale). */
     minScoreThreshold: number
-    /** Neutral prior mean (0–10) used in friends-only mode. */
+    /** Neutral prior mean (0–10) used in friends-only mode and as the AniList fallback. */
     neutralPriorMean: number
+    /**
+     * Stage-2 Bayesian prior weight, in "phantom watchers", for shrinkage toward
+     * the global mean. Items with many watchers move toward their own stage-1
+     * score; items with few watchers shrink to the global mean. Higher = more
+     * shrinkage, which discounts items that few people have watched.
+     */
+    watchCountPriorWeight: number
 }
 
 export const DEFAULT_SCORING_CONFIG: ScoringConfig = {
@@ -21,6 +28,7 @@ export const DEFAULT_SCORING_CONFIG: ScoringConfig = {
     friendsOnlyPriorWeight: 2,
     minScoreThreshold: 6,
     neutralPriorMean: 7,
+    watchCountPriorWeight: 4,
 }
 
 /**
